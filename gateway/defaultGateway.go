@@ -2,10 +2,12 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/ngyewch/fjage-go"
 )
 
 type DefaultGateway struct {
@@ -35,6 +37,10 @@ func NewDefaultGateway(transport Transport) (*DefaultGateway, error) {
 func (gw *DefaultGateway) Close() error {
 	_ = gw.subscription.Close()
 	return nil
+}
+
+func (gw *DefaultGateway) AgentID() string {
+	return gw.agentID
 }
 
 func (gw *DefaultGateway) messageHandler() {
@@ -101,14 +107,20 @@ func (gw *DefaultGateway) messageHandler() {
 					break
 				}
 			default:
-				fmt.Printf("!!! unhandled request %+v\n", jsonMessage)
+				fmt.Println("!!! unhandled request")
+				jsonBytes, err := json.MarshalIndent(jsonMessage, "", "  ")
+				if err != nil {
+					fmt.Printf("%+v\n", jsonMessage)
+				} else {
+					fmt.Println(string(jsonBytes))
+				}
 			}
 		}
 	}
 }
 
 func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONMessage, error) {
-	subscription, err := gw.transport.SubscribeToResponse(req.ID, req.Action)
+	subscription, err := gw.transport.SubscribeToResponse(req)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +139,36 @@ func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONM
 			return nil, err
 		case jsonMessage := <-subscription.Chan():
 			if (jsonMessage.ID == req.ID) && (jsonMessage.InResponseTo == req.Action) {
+				return jsonMessage, nil
+			}
+		}
+	}
+}
+
+func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msgID string) (*JSONMessage, error) {
+	subscription, err := gw.transport.SubscribeToMessageResponse(msgID)
+	if err != nil {
+		return nil, err
+	}
+	defer func(subscription JsonMessageSubscription) {
+		_ = subscription.Close()
+	}(subscription)
+	err = gw.transport.SendJsonMessage(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case err := <-subscription.ErrChan():
+			return nil, err
+		case jsonMessage := <-subscription.Chan():
+			if (jsonMessage.Message == nil) || (jsonMessage.Message.Data == nil) {
+				continue
+			}
+			inReplyTo, ok := jsonMessage.Message.Data["inReplyTo"].(string)
+			if ok && (inReplyTo == msgID) {
 				return jsonMessage, nil
 			}
 		}
@@ -200,5 +242,24 @@ func (gw *DefaultGateway) ContainsAgent(ctx context.Context, agentID string) (*C
 	}
 	return &ContainsAgentResponse{
 		Answer: rsp.Answer,
+	}, nil
+}
+
+func (gw *DefaultGateway) Send(ctx context.Context, clazz string, message *fjage.Message, properties map[string]any) (*SendResponse, error) {
+	req, err := NewSendRequestMessage(clazz, message, properties)
+	if err != nil {
+		return nil, err
+	}
+	jsonBytes, err := json.MarshalIndent(req, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(string(jsonBytes))
+	rsp, err := gw.requestSend(ctx, req, message.MsgID)
+	if err != nil {
+		return nil, err
+	}
+	return &SendResponse{
+		Message: rsp.Message,
 	}, nil
 }

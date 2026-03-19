@@ -11,7 +11,8 @@ type Transport interface {
 	io.Closer
 
 	SubscribeToRequests() (JsonMessageSubscription, error)
-	SubscribeToResponse(id string, action string) (JsonMessageSubscription, error)
+	SubscribeToResponse(jsonMessage *JSONMessage) (JsonMessageSubscription, error)
+	SubscribeToMessageResponse(msgID string) (JsonMessageSubscription, error)
 	SendJsonMessage(ctx context.Context, jsonMessage *JSONMessage) error
 }
 

@@ -26,6 +26,10 @@ var (
 		Name:      "agentID",
 		UsageText: "(agentID)",
 	}
+	pathArg = &cli.StringArg{
+		Name:      "path",
+		UsageText: "(path)",
+	}
 
 	app = &cli.Command{
 		Name:    "fjage-cli",
@@ -79,6 +83,23 @@ var (
 				},
 				Arguments: []cli.Argument{
 					agentIdArg,
+				},
+			},
+			{
+				Name:  "shell",
+				Usage: "shell",
+				Commands: []*cli.Command{
+					{
+						Name:   "ls",
+						Usage:  "ls",
+						Action: doShellLs,
+						Flags: []cli.Flag{
+							gatewayUrlFlag,
+						},
+						Arguments: []cli.Argument{
+							pathArg,
+						},
+					},
 				},
 			},
 			{

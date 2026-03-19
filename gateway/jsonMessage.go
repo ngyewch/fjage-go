@@ -1,17 +1,27 @@
 package gateway
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+	"github.com/ngyewch/fjage-go"
+)
 
 type JSONMessage struct {
-	ID           string   `json:"id,omitempty"`
-	Action       string   `json:"action,omitempty"`
-	InResponseTo string   `json:"inResponseTo,omitempty"`
-	AgentID      string   `json:"agentID,omitempty"`
-	AgentIDs     []string `json:"agentIDs,omitempty"`
-	AgentTypes   []string `json:"agentTypes,omitempty"`
-	Service      string   `json:"service,omitempty"`
-	Services     []string `json:"services,omitempty"`
-	Answer       bool     `json:"answer,omitempty"`
+	ID           string           `json:"id,omitempty"`
+	Action       string           `json:"action,omitempty"`
+	InResponseTo string           `json:"inResponseTo,omitempty"`
+	AgentID      string           `json:"agentID,omitempty"`
+	AgentIDs     []string         `json:"agentIDs,omitempty"`
+	AgentTypes   []string         `json:"agentTypes,omitempty"`
+	Service      string           `json:"service,omitempty"`
+	Services     []string         `json:"services,omitempty"`
+	Answer       bool             `json:"answer,omitempty"`
+	Relay        bool             `json:"relay,omitempty"`
+	Message      *MessageEnvelope `json:"message,omitempty"`
+}
+
+type MessageEnvelope struct {
+	Clazz string         `json:"clazz,omitempty"`
+	Data  map[string]any `json:"data,omitempty"`
 }
 
 func NewAgentsRequestMessage() (*JSONMessage, error) {
@@ -110,4 +120,24 @@ func NewContainsAgentResponseMessage(req *JSONMessage, answer bool) *JSONMessage
 		Action: req.Action,
 		Answer: answer,
 	}
+}
+
+func NewSendRequestMessage(clazz string, message *fjage.Message, properties map[string]any) (*JSONMessage, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	messageMap := make(map[string]any)
+	for key, value := range properties {
+		messageMap[key] = value
+	}
+	message.PopulateMap(messageMap)
+	return &JSONMessage{
+		ID:     id.String(),
+		Action: "send",
+		Message: &MessageEnvelope{
+			Clazz: clazz,
+			Data:  messageMap,
+		},
+	}, nil
 }

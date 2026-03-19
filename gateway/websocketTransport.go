@@ -71,8 +71,19 @@ func (transport *WebSocketTransport) SubscribeToRequests() (JsonMessageSubscript
 	return NewPubSubJsonMessageSubscription(subscription), nil
 }
 
-func (transport *WebSocketTransport) SubscribeToResponse(id string, action string) (JsonMessageSubscription, error) {
-	subscription, err := transport.subscriber.Subscribe(fmt.Sprintf("response/%s/%s", action, id),
+func (transport *WebSocketTransport) SubscribeToResponse(req *JSONMessage) (JsonMessageSubscription, error) {
+	subscription, err := transport.subscriber.Subscribe(fmt.Sprintf("response/%s/%s", req.Action, req.ID),
+		pubsub.WithChannelSize[*JSONMessage](pubsub.Single),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return NewPubSubJsonMessageSubscription(subscription), nil
+}
+
+func (transport *WebSocketTransport) SubscribeToMessageResponse(msgID string) (JsonMessageSubscription, error) {
+	topic := fmt.Sprintf("messageResponse/%s", msgID)
+	subscription, err := transport.subscriber.Subscribe(topic,
 		pubsub.WithChannelSize[*JSONMessage](pubsub.Single),
 	)
 	if err != nil {
@@ -125,6 +136,11 @@ func (transport *WebSocketTransport) readLoop() {
 			topic := "requests"
 			if jsonMessage.InResponseTo != "" {
 				topic = fmt.Sprintf("response/%s/%s", jsonMessage.InResponseTo, jsonMessage.ID)
+			} else if (jsonMessage.Action == "send") && (jsonMessage.Message != nil) && (jsonMessage.Message.Data != nil) {
+				inReplyTo, ok := jsonMessage.Message.Data["inReplyTo"].(string)
+				if ok {
+					topic = fmt.Sprintf("messageResponse/%s", inReplyTo)
+				}
 			}
 			err = transport.publisher.Publish(topic, &jsonMessage)
 			if err != nil {

@@ -90,7 +90,7 @@ func (transport *WebSocketTransport) SendJsonMessage(ctx context.Context, jsonMe
 		return err
 	}
 	jsonMessageBytes = append(jsonMessageBytes, '\n')
-	fmt.Println(time.Now().Format(time.DateTime), ">>>", string(jsonMessageBytes))
+	//fmt.Println(time.Now().Format(time.DateTime), ">>>", string(jsonMessageBytes))
 	return transport.conn.Write(ctx, websocket.MessageText, jsonMessageBytes)
 }
 
@@ -111,7 +111,7 @@ func (transport *WebSocketTransport) readLoop() {
 			if messageType != websocket.MessageText {
 				continue
 			}
-			fmt.Println(time.Now().Format(time.DateTime), "<<<", string(messageBytes))
+			//fmt.Println(time.Now().Format(time.DateTime), "<<<", string(messageBytes))
 			var jsonMessage JSONMessage
 			err = json.Unmarshal(messageBytes, &jsonMessage)
 			if err != nil {

@@ -91,6 +91,15 @@ func (gw *DefaultGateway) messageHandler() {
 					)
 					break
 				}
+			case "containsAgent":
+				rsp := NewContainsAgentResponseMessage(jsonMessage, jsonMessage.AgentID == gw.agentID)
+				err := gw.transport.SendJsonMessage(context.Background(), rsp)
+				if err != nil {
+					slog.Error("error sending response",
+						slog.Any("err", err),
+					)
+					break
+				}
 			default:
 				fmt.Printf("!!! unhandled request %+v\n", jsonMessage)
 			}

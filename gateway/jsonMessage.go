@@ -103,3 +103,11 @@ func NewContainsAgentRequestMessage(agentID string) (*JSONMessage, error) {
 		AgentID: agentID,
 	}, nil
 }
+
+func NewContainsAgentResponseMessage(req *JSONMessage, answer bool) *JSONMessage {
+	return &JSONMessage{
+		ID:     req.ID,
+		Action: req.Action,
+		Answer: answer,
+	}
+}

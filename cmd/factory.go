@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func newGateway(ctx context.Context, cmd *cli.Command) (gateway.Gateway, error) {
+func newTransport(ctx context.Context, cmd *cli.Command) (gateway.Transport, error) {
 	gatewayUrl := cmd.String(gatewayUrlFlag.Name)
 
 	u, err := url.Parse(gatewayUrl)
@@ -18,7 +18,7 @@ func newGateway(ctx context.Context, cmd *cli.Command) (gateway.Gateway, error) 
 	}
 
 	if (u.Scheme == "ws") || (u.Scheme == "wss") {
-		return gateway.NewWebSocketGateway(ctx, gatewayUrl)
+		return gateway.NewWebSocketTransport(ctx, gatewayUrl)
 	}
 
 	return nil, fmt.Errorf("unsupported gateway url scheme: %s", u.Scheme)

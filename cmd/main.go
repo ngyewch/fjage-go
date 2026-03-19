@@ -109,6 +109,18 @@ var (
 						},
 					},
 					{
+						Name:   "get",
+						Usage:  "get",
+						Action: doShellGet,
+						Flags: []cli.Flag{
+							gatewayUrlFlag,
+						},
+						Arguments: []cli.Argument{
+							remotePathArg,
+							localPathArg,
+						},
+					},
+					{
 						Name:   "put",
 						Usage:  "put",
 						Action: doShellPut,

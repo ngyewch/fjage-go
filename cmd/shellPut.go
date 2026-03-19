@@ -13,6 +13,7 @@ import (
 func doShellPut(ctx context.Context, cmd *cli.Command) error {
 	localPath := cmd.StringArg(localPathArg.Name)
 	remotePath := cmd.StringArg(remotePathArg.Name)
+
 	if localPath == "" {
 		return fmt.Errorf("please specify %s", localPathArg.Name)
 	}

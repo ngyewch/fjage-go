@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goforj/godump"
 	"github.com/google/uuid"
 	"github.com/ngyewch/fjage-go"
 	"github.com/ngyewch/fjage-go/gateway"
@@ -71,8 +70,6 @@ func (shell *Shell) GetFile(ctx context.Context, filename string, offset int64, 
 	if messageWrapper.Data.Perf != "INFORM" {
 		return nil, fjage.NewPerformativeError(messageWrapper.Data.Perf)
 	}
-
-	godump.Dump(messageWrapper.Data)
 
 	return messageWrapper.Data, nil
 }

@@ -250,11 +250,6 @@ func (gw *DefaultGateway) Send(ctx context.Context, clazz string, message *fjage
 	if err != nil {
 		return nil, err
 	}
-	jsonBytes, err := json.MarshalIndent(req, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(string(jsonBytes))
 	rsp, err := gw.requestSend(ctx, req, message.MsgID)
 	if err != nil {
 		return nil, err

@@ -30,6 +30,14 @@ var (
 		Name:      "path",
 		UsageText: "(path)",
 	}
+	localPathArg = &cli.StringArg{
+		Name:      "local-path",
+		UsageText: "(local path)",
+	}
+	remotePathArg = &cli.StringArg{
+		Name:      "remote-path",
+		UsageText: "(remote path)",
+	}
 
 	app = &cli.Command{
 		Name:    "fjage-cli",
@@ -98,6 +106,18 @@ var (
 						},
 						Arguments: []cli.Argument{
 							pathArg,
+						},
+					},
+					{
+						Name:   "put",
+						Usage:  "put",
+						Action: doShellPut,
+						Flags: []cli.Flag{
+							gatewayUrlFlag,
+						},
+						Arguments: []cli.Argument{
+							localPathArg,
+							remotePathArg,
 						},
 					},
 				},

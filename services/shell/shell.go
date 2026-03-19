@@ -58,12 +58,10 @@ func (shell *Shell) GetFile(ctx context.Context, filename string, offset int64, 
 		return nil, err
 	}
 
-	jsonBytes, err := json.MarshalIndent(sendResponse.Message, "", "  ")
+	jsonBytes, err := json.Marshal(sendResponse.Message)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(string(jsonBytes))
 
 	var messageWrapper gateway.MessageWrapper[*GetFileRsp]
 	err = json.Unmarshal(jsonBytes, &messageWrapper)
@@ -77,4 +75,46 @@ func (shell *Shell) GetFile(ctx context.Context, filename string, offset int64, 
 	godump.Dump(messageWrapper.Data)
 
 	return messageWrapper.Data, nil
+}
+
+func (shell *Shell) PutFile(ctx context.Context, filename string, offset int64, contents []byte) error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	request := &PutFileReq{
+		Message: fjage.Message{
+			MsgID:     id.String(),
+			Perf:      "REQUEST",
+			Recipient: shell.shellAgentID,
+			Sender:    shell.gw.AgentID(),
+			SentAt:    time.Now().UnixMilli(),
+		},
+		Filename: filename,
+		Offset:   offset,
+		Contents: &gateway.Array{
+			Clazz: "[B",
+			Data:  contents,
+		},
+	}
+	sendResponse, err := shell.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	if err != nil {
+		return err
+	}
+
+	jsonBytes, err := json.Marshal(sendResponse.Message)
+	if err != nil {
+		return err
+	}
+
+	var messageWrapper gateway.MessageWrapper[*fjage.Message]
+	err = json.Unmarshal(jsonBytes, &messageWrapper)
+	if err != nil {
+		return err
+	}
+	if messageWrapper.Data.Perf != "AGREE" {
+		return fjage.NewPerformativeError(messageWrapper.Data.Perf)
+	}
+
+	return nil
 }

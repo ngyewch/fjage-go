@@ -23,3 +23,25 @@ func newTransport(ctx context.Context, cmd *cli.Command) (gateway.Transport, err
 
 	return nil, fmt.Errorf("unsupported gateway url scheme: %s", u.Scheme)
 }
+
+func withGateway(ctx context.Context, cmd *cli.Command, handler func(gw gateway.Gateway) error) error {
+	transport, err := newTransport(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	defer func(transport gateway.Transport) {
+		_ = transport.Close()
+	}(transport)
+
+	gw, err := func(transport gateway.Transport) (gateway.Gateway, error) {
+		return gateway.NewDefaultGateway(transport)
+	}(transport)
+	if err != nil {
+		return err
+	}
+	defer func(gw gateway.Gateway) {
+		_ = gw.Close()
+	}(gw)
+
+	return handler(gw)
+}

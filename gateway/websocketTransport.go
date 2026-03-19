@@ -99,13 +99,15 @@ func (transport *WebSocketTransport) readLoop() {
 	for !transport.closed {
 		messageType, messageBytes, err := transport.conn.Read(ctx)
 		if err != nil {
-			closeStatus := websocket.CloseStatus(err)
-			if closeStatus == -1 {
-				slog.Error("websocket read error",
-					slog.Any("err", err),
-					slog.Any("closeStatus", closeStatus),
-				)
-			}
+			/*
+				closeStatus := websocket.CloseStatus(err)
+				if closeStatus == -1 {
+					slog.Error("websocket read error",
+						slog.Any("err", err),
+						slog.Any("closeStatus", closeStatus),
+					)
+				}
+			*/
 			break
 		} else {
 			if messageType != websocket.MessageText {

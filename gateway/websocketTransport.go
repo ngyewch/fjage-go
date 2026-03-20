@@ -139,6 +139,7 @@ func (transport *WebSocketTransport) readLoop() {
 			} else if (jsonMessage.Action == "send") && (jsonMessage.Message != nil) && (jsonMessage.Message.Data != nil) {
 				inReplyTo, ok := jsonMessage.Message.Data["inReplyTo"].(string)
 				if ok {
+					fmt.Println(time.Now().Format(time.DateTime), "<<<", "inReplyTo", inReplyTo) // TODO
 					topic = fmt.Sprintf("messageResponse/%s", inReplyTo)
 				}
 			}

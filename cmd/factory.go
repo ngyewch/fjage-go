@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/ngyewch/fjage-go/clients/shell"
 	"github.com/ngyewch/fjage-go/gateway"
 	"github.com/urfave/cli/v3"
 )
@@ -44,4 +45,8 @@ func withGateway(ctx context.Context, cmd *cli.Command, handler func(gw gateway.
 	}(gw)
 
 	return handler(gw)
+}
+
+func newShellClient(ctx context.Context, cmd *cli.Command, gw gateway.Gateway) (*shell.Client, error) {
+	return shell.New(ctx, gw)
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ngyewch/fjage-go/clients/shell"
 	"github.com/ngyewch/fjage-go/gateway"
 	"github.com/olekukonko/tablewriter"
 	"github.com/olekukonko/tablewriter/tw"
@@ -20,7 +19,7 @@ func doShellLs(ctx context.Context, cmd *cli.Command) error {
 
 	return withGateway(ctx, cmd,
 		func(gw gateway.Gateway) error {
-			shellClient, err := shell.New(ctx, gw)
+			shellClient, err := newShellClient(ctx, cmd, gw)
 			if err != nil {
 				return err
 			}

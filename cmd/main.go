@@ -17,6 +17,18 @@ var (
 		Value:   "ws://localhost:8080/ws",
 		Sources: cli.EnvVars("HTTP_PORT"),
 	}
+	copyBufferSizeFlag = &cli.IntFlag{
+		Name:    "copy-buffer-size",
+		Usage:   "copy buffer size (bytes)",
+		Value:   16 * 1024,
+		Sources: cli.EnvVars("COPY_BUFFER_SIZE"),
+	}
+	progressFlag = &cli.BoolFlag{
+		Name:    "progress",
+		Usage:   "show progress",
+		Value:   true,
+		Sources: cli.EnvVars("PROGRESS"),
+	}
 
 	serviceArg = &cli.StringArg{
 		Name:      "service",
@@ -114,6 +126,8 @@ var (
 						Action: doShellGet,
 						Flags: []cli.Flag{
 							gatewayUrlFlag,
+							copyBufferSizeFlag,
+							progressFlag,
 						},
 						Arguments: []cli.Argument{
 							remotePathArg,
@@ -126,6 +140,8 @@ var (
 						Action: doShellPut,
 						Flags: []cli.Flag{
 							gatewayUrlFlag,
+							copyBufferSizeFlag,
+							progressFlag,
 						},
 						Arguments: []cli.Argument{
 							localPathArg,

@@ -9,50 +9,47 @@ import (
 	"github.com/google/uuid"
 	"github.com/ngyewch/fjage-go"
 	"github.com/ngyewch/fjage-go/gateway"
+	"github.com/ngyewch/fjage-go/services/shell"
 )
 
-const (
-	serviceName = "org.arl.fjage.shell.Services.SHELL"
-)
-
-type Shell struct {
+type Client struct {
 	gw           gateway.Gateway
 	shellAgentID string
 }
 
-func NewShell(ctx context.Context, gw gateway.Gateway) (*Shell, error) {
-	getAgentForServiceResponse, err := gw.AgentForService(ctx, serviceName)
+func New(ctx context.Context, gw gateway.Gateway) (*Client, error) {
+	getAgentForServiceResponse, err := gw.AgentForService(ctx, shell.ServiceName)
 	if err != nil {
 		return nil, err
 	}
 	shellAgentID := getAgentForServiceResponse.AgentID
 	if shellAgentID == "" {
-		return nil, fmt.Errorf("could not find agent for %s", serviceName)
+		return nil, fmt.Errorf("could not find agent for %s", shell.ServiceName)
 	}
-	return &Shell{
+	return &Client{
 		gw:           gw,
 		shellAgentID: shellAgentID,
 	}, nil
 }
 
-func (shell *Shell) GetFile(ctx context.Context, filename string, offset int64, length int64) (*GetFileRsp, error) {
+func (client *Client) GetFile(ctx context.Context, filename string, offset int64, length int64) (*shell.GetFileRsp, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
-	request := &GetFileReq{
+	request := &shell.GetFileReq{
 		Message: fjage.Message{
 			MsgID:     id.String(),
 			Perf:      "REQUEST",
-			Recipient: shell.shellAgentID,
-			Sender:    shell.gw.AgentID(),
+			Recipient: client.shellAgentID,
+			Sender:    client.gw.AgentID(),
 			SentAt:    time.Now().UnixMilli(),
 		},
 		Filename: filename,
 		Offset:   offset,
 		Length:   length,
 	}
-	sendResponse, err := shell.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +59,7 @@ func (shell *Shell) GetFile(ctx context.Context, filename string, offset int64, 
 		return nil, err
 	}
 
-	var messageWrapper gateway.MessageWrapper[*GetFileRsp]
+	var messageWrapper gateway.MessageWrapper[*shell.GetFileRsp]
 	err = json.Unmarshal(jsonBytes, &messageWrapper)
 	if err != nil {
 		return nil, err
@@ -74,17 +71,17 @@ func (shell *Shell) GetFile(ctx context.Context, filename string, offset int64, 
 	return messageWrapper.Data, nil
 }
 
-func (shell *Shell) PutFile(ctx context.Context, filename string, offset int64, contents []byte) error {
+func (client *Client) PutFile(ctx context.Context, filename string, offset int64, contents []byte) error {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
-	request := &PutFileReq{
+	request := &shell.PutFileReq{
 		Message: fjage.Message{
 			MsgID:     id.String(),
 			Perf:      "REQUEST",
-			Recipient: shell.shellAgentID,
-			Sender:    shell.gw.AgentID(),
+			Recipient: client.shellAgentID,
+			Sender:    client.gw.AgentID(),
 			SentAt:    time.Now().UnixMilli(),
 		},
 		Filename: filename,
@@ -94,7 +91,7 @@ func (shell *Shell) PutFile(ctx context.Context, filename string, offset int64, 
 			Data:  contents,
 		},
 	}
-	sendResponse, err := shell.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
 	if err != nil {
 		return err
 	}

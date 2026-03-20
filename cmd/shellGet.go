@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ngyewch/fjage-go/clients/shell"
 	"github.com/ngyewch/fjage-go/gateway"
-	"github.com/ngyewch/fjage-go/services/shell"
 	"github.com/urfave/cli/v3"
 )
 
@@ -29,7 +29,7 @@ func doShellGet(ctx context.Context, cmd *cli.Command) error {
 
 	return withGateway(ctx, cmd,
 		func(gw gateway.Gateway) error {
-			shellClient, err := shell.NewShell(ctx, gw)
+			shellClient, err := shell.New(ctx, gw)
 			if err != nil {
 				return err
 			}

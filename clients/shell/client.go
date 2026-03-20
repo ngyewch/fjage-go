@@ -10,6 +10,7 @@ import (
 	"github.com/ngyewch/fjage-go"
 	"github.com/ngyewch/fjage-go/gateway"
 	"github.com/ngyewch/fjage-go/services/shell"
+	"github.com/ngyewch/fjage-go/types"
 )
 
 type Client struct {
@@ -86,10 +87,7 @@ func (client *Client) PutFile(ctx context.Context, filename string, offset int64
 		},
 		Filename: filename,
 		Offset:   offset,
-		Contents: &gateway.Array{
-			Clazz: "[B",
-			Data:  contents,
-		},
+		Contents: types.ByteArray(contents),
 	}
 	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
 	if err != nil {

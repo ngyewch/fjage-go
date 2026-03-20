@@ -51,7 +51,7 @@ func doShellGet(ctx context.Context, cmd *cli.Command) error {
 				_ = f.Close()
 			}(f)
 
-			_, err = f.Write(response.Contents.Data)
+			_, err = f.Write(response.Contents)
 			if err != nil {
 				return err
 			}

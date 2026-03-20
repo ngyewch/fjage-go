@@ -7,16 +7,16 @@ import (
 	"time"
 
 	"github.com/ngyewch/fjage-go"
-	"github.com/ngyewch/fjage-go/gateway"
+	"github.com/ngyewch/fjage-go/types"
 )
 
 type GetFileRsp struct {
 	fjage.Message
 
-	Directory bool           `json:"dir"` // TODO directory
-	Filename  string         `json:"filename"`
-	Offset    int64          `json:"ofs"` // TODO offset
-	Contents  *gateway.Array `json:"contents"`
+	Directory bool            `json:"dir"` // TODO directory
+	Filename  string          `json:"filename"`
+	Offset    int64           `json:"ofs"` // TODO offset
+	Contents  types.ByteArray `json:"contents"`
 }
 
 type DirEntry struct {
@@ -30,7 +30,7 @@ func (rsp GetFileRsp) DirEntries() ([]DirEntry, error) {
 		return nil, fmt.Errorf("%s is not a directory", rsp.Filename)
 	}
 
-	s := string(rsp.Contents.Data)
+	s := string(rsp.Contents)
 	lines := strings.Split(s, "\n")
 
 	var entries []DirEntry

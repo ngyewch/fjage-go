@@ -24,6 +24,13 @@ func (ba ByteArray) MarshalJSON() ([]byte, error) {
 
 func (ba *ByteArray) UnmarshalJSON(data []byte) error {
 	switch data[0] {
+	case 'n':
+		if data[1] != 'u' || data[2] != 'l' || data[3] != 'l' {
+			return fmt.Errorf("could not unmarshal byte array")
+		}
+		*ba = nil
+		return nil
+
 	case '{':
 		var iba byteArray
 		err := json.Unmarshal(data, &iba)

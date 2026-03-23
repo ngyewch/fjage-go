@@ -34,7 +34,11 @@ func NewPubSubJsonMessageSubscription(subscription *pubsub.Subscription[*JSONMes
 }
 
 func (subscription *PubSubJsonMessageSubscription) Close() error {
-	return subscription.subscription.Close()
+	// HACK sometimes this hangs
+	go func() {
+		_ = subscription.subscription.Close()
+	}()
+	return nil
 }
 
 func (subscription *PubSubJsonMessageSubscription) Chan() <-chan *JSONMessage {

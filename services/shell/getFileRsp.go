@@ -13,9 +13,9 @@ import (
 type GetFileRsp struct {
 	fjage.Message
 
-	Directory bool            `json:"dir"` // TODO directory
+	Directory bool            `json:"directory"`
 	Filename  string          `json:"filename"`
-	Offset    int64           `json:"ofs"` // TODO offset
+	Offset    int64           `json:"offset"`
 	Contents  types.ByteArray `json:"contents"`
 }
 

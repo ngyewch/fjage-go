@@ -6,8 +6,8 @@ type GetFileReq struct {
 	fjage.Message
 
 	Filename string `json:"filename"`
-	Offset   int64  `json:"ofs"` // TODO offset
-	Length   int64  `json:"len"` // TODO length
+	Offset   int64  `json:"offset"`
+	Length   int64  `json:"length"`
 }
 
 func (m GetFileReq) Clazz() string {
@@ -17,7 +17,7 @@ func (m GetFileReq) Clazz() string {
 func (m GetFileReq) PropertiesMap() map[string]any {
 	return map[string]any{
 		"filename": m.Filename,
-		"ofs":      m.Offset, // TODO offset
-		"len":      m.Length, // TODO length
+		"offset":   m.Offset,
+		"length":   m.Length,
 	}
 }

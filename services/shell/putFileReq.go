@@ -9,7 +9,7 @@ type PutFileReq struct {
 	fjage.Message
 
 	Filename string          `json:"filename"`
-	Offset   int64           `json:"ofs"` // TODO offset
+	Offset   int64           `json:"offset"`
 	Contents types.ByteArray `json:"contents"`
 }
 
@@ -20,7 +20,7 @@ func (m PutFileReq) Clazz() string {
 func (m PutFileReq) PropertiesMap() map[string]any {
 	return map[string]any{
 		"filename": m.Filename,
-		"ofs":      m.Offset, // TODO offset
+		"offset":   m.Offset,
 		"contents": m.Contents,
 	}
 }

@@ -15,9 +15,11 @@ func (m GetFileReq) Clazz() string {
 }
 
 func (m GetFileReq) PropertiesMap() map[string]any {
-	return map[string]any{
-		"filename": m.Filename,
-		"offset":   m.Offset,
-		"length":   m.Length,
+	props := make(map[string]any)
+	if m.Filename != "" {
+		props["filename"] = m.Filename
 	}
+	props["offset"] = m.Offset
+	props["length"] = m.Length
+	return props
 }

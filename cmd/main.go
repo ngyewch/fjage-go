@@ -15,7 +15,7 @@ var (
 		Name:    "gateway-url",
 		Usage:   "gateway URL",
 		Value:   "ws://localhost:8080/ws",
-		Sources: cli.EnvVars("HTTP_PORT"),
+		Sources: cli.EnvVars("GATEWAY_URL"),
 	}
 	copyBufferSizeFlag = &cli.IntFlag{
 		Name:    "copy-buffer-size",

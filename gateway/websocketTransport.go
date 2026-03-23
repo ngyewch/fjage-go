@@ -50,6 +50,7 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string) (*WebSocketTr
 		publisher:  pubsub.NewPublisher[*JSONMessage](broker),
 		subscriber: pubsub.NewSubscriber[*JSONMessage](broker),
 	}
+	go transport.keepAlive()
 	go transport.readLoop()
 	return transport, nil
 }
@@ -148,6 +149,35 @@ func (transport *WebSocketTransport) readLoop() {
 					slog.Any("err", err),
 				)
 			}
+		}
+	}
+}
+
+type AliveMessage struct {
+	Alive bool `json:"alive"`
+}
+
+func (transport *WebSocketTransport) keepAlive() {
+	aliveMessageBytes, err := json.Marshal(AliveMessage{Alive: true})
+	if err != nil {
+		slog.Error("alive message marshal error",
+			slog.Any("err", err),
+		)
+		return
+	}
+	aliveMessageBytes = append(aliveMessageBytes, '\n')
+	ctx := context.Background()
+	for {
+		err = transport.conn.Write(ctx, websocket.MessageText, aliveMessageBytes)
+		if err != nil {
+			slog.Warn("error sending alive message",
+				slog.Any("err", err),
+			)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(5 * time.Second):
 		}
 	}
 }

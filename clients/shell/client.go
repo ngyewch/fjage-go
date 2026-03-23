@@ -110,3 +110,80 @@ func (client *Client) PutFile(ctx context.Context, filename string, offset int64
 
 	return nil
 }
+
+func (client *Client) ExecuteCommand(ctx context.Context, command string) error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	request := &shell.ShellExecReq{
+		Message: fjage.Message{
+			MsgID:     id.String(),
+			Perf:      "REQUEST",
+			Recipient: client.shellAgentID,
+			Sender:    client.gw.AgentID(),
+			SentAt:    time.Now().UnixMilli(),
+		},
+		Command: command,
+		Ans:     false,
+	}
+	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	if err != nil {
+		return err
+	}
+
+	jsonBytes, err := json.Marshal(sendResponse.Message)
+	if err != nil {
+		return err
+	}
+
+	var messageWrapper gateway.MessageWrapper[*fjage.Message]
+	err = json.Unmarshal(jsonBytes, &messageWrapper)
+	if err != nil {
+		return err
+	}
+	if messageWrapper.Data.Perf != "AGREE" {
+		return fjage.NewPerformativeError(messageWrapper.Data.Perf)
+	}
+
+	return nil
+}
+
+func (client *Client) ExecuteScript(ctx context.Context, scriptFile string, scriptArgs []string) error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	request := &shell.ShellExecReq{
+		Message: fjage.Message{
+			MsgID:     id.String(),
+			Perf:      "REQUEST",
+			Recipient: client.shellAgentID,
+			Sender:    client.gw.AgentID(),
+			SentAt:    time.Now().UnixMilli(),
+		},
+		Script:     scriptFile,
+		ScriptArgs: scriptArgs,
+		Ans:        false,
+	}
+	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	if err != nil {
+		return err
+	}
+
+	jsonBytes, err := json.Marshal(sendResponse.Message)
+	if err != nil {
+		return err
+	}
+
+	var messageWrapper gateway.MessageWrapper[*fjage.Message]
+	err = json.Unmarshal(jsonBytes, &messageWrapper)
+	if err != nil {
+		return err
+	}
+	if messageWrapper.Data.Perf != "AGREE" {
+		return fjage.NewPerformativeError(messageWrapper.Data.Perf)
+	}
+
+	return nil
+}

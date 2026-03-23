@@ -2,10 +2,7 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/ngyewch/fjage-go"
@@ -108,13 +105,15 @@ func (gw *DefaultGateway) messageHandler() {
 					break
 				}
 			default:
-				fmt.Println("!!! unhandled request")
-				jsonBytes, err := json.MarshalIndent(jsonMessage, "", "  ")
-				if err != nil {
-					fmt.Printf("%+v\n", jsonMessage)
-				} else {
-					fmt.Println(string(jsonBytes))
-				}
+				/*
+					fmt.Println("!!! unhandled request")
+					jsonBytes, err := json.MarshalIndent(jsonMessage, "", "  ")
+					if err != nil {
+						fmt.Printf("%+v\n", jsonMessage)
+					} else {
+						fmt.Println(string(jsonBytes))
+					}
+				*/
 			}
 		}
 	}
@@ -147,7 +146,6 @@ func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONM
 }
 
 func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msgID string) (*JSONMessage, error) {
-	fmt.Println(time.Now().Format(time.DateTime), ">>>", "msgID", msgID) // TODO
 	subscription, err := gw.transport.SubscribeToMessageResponse(msgID)
 	if err != nil {
 		return nil, err
@@ -171,7 +169,6 @@ func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msg
 			}
 			inReplyTo, ok := jsonMessage.Message.Data["inReplyTo"].(string)
 			if ok && (inReplyTo == msgID) {
-				fmt.Println(time.Now().Format(time.DateTime), "<<< [2]", "inReplyTo", inReplyTo) // TODO
 				return jsonMessage, nil
 			}
 		}
@@ -253,9 +250,7 @@ func (gw *DefaultGateway) Send(ctx context.Context, clazz string, message *fjage
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("<1>") // TODO
 	rsp, err := gw.requestSend(ctx, req, message.MsgID)
-	fmt.Println("<2>") // TODO
 	if err != nil {
 		return nil, err
 	}

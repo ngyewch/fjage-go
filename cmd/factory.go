@@ -50,3 +50,14 @@ func withGateway(ctx context.Context, cmd *cli.Command, handler func(gw gateway.
 func newShellClient(ctx context.Context, cmd *cli.Command, gw gateway.Gateway) (*shell.Client, error) {
 	return shell.New(ctx, gw)
 }
+
+func newShellHelper(ctx context.Context, cmd *cli.Command, gw gateway.Gateway) (*shell.Helper, error) {
+	copyBufferSize := cmd.Int(copyBufferSizeFlag.Name)
+
+	client, err := newShellClient(ctx, cmd, gw)
+	if err != nil {
+		return nil, err
+	}
+
+	return shell.NewHelper(client, int64(copyBufferSize)), nil
+}

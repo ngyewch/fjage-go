@@ -14,7 +14,7 @@ type DefaultGateway struct {
 	agentID      string
 }
 
-func NewDefaultGateway(transport Transport) (*DefaultGateway, error) {
+func NewDefaultGateway(ctx context.Context, transport Transport) (*DefaultGateway, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -27,6 +27,14 @@ func NewDefaultGateway(transport Transport) (*DefaultGateway, error) {
 		transport:    transport,
 		subscription: subscription,
 		agentID:      "gateway-" + id.String(),
+	}
+	wantMessagesForJSONMessage, err := NewWantsMessagesFor([]string{gw.agentID})
+	if err != nil {
+		return nil, err
+	}
+	err = gw.transport.SendJsonMessage(ctx, wantMessagesForJSONMessage)
+	if err != nil {
+		return nil, err
 	}
 	go gw.messageHandler()
 	return gw, nil
@@ -56,7 +64,7 @@ func (gw *DefaultGateway) messageHandler() {
 				break
 			}
 			if jsonMessage.InResponseTo != "" {
-				continue
+				break
 			}
 			switch jsonMessage.Action {
 			case "agents":
@@ -105,18 +113,18 @@ func (gw *DefaultGateway) messageHandler() {
 					break
 				}
 			default:
-				slog.Debug("unhandled message",
-					slog.Any("jsonMessage", jsonMessage),
-				)
+				// do nothing
+				/*
+					slog.Debug("unhandled message",
+						slog.Any("jsonMessage", jsonMessage),
+					)
+				*/
 			}
 		}
 	}
 }
 
 func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONMessage, error) {
-	slog.Debug(">>> request",
-		slog.Any("req", req),
-	)
 	subscription, err := gw.transport.SubscribeToResponse(req)
 	if err != nil {
 		return nil, err
@@ -136,9 +144,6 @@ func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONM
 			return nil, err
 		case rsp := <-subscription.Chan():
 			if (rsp.ID == req.ID) && (rsp.InResponseTo == req.Action) {
-				slog.Debug("<<< request",
-					slog.Any("rsp", rsp),
-				)
 				return rsp, nil
 			}
 		}
@@ -146,9 +151,6 @@ func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONM
 }
 
 func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msgID string) (*JSONMessage, error) {
-	slog.Debug(">>> requestSend",
-		slog.Any("req", req),
-	)
 	subscription, err := gw.transport.SubscribeToMessageResponse(msgID)
 	if err != nil {
 		return nil, err
@@ -172,9 +174,6 @@ func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msg
 			}
 			inReplyTo, ok := rsp.Message.Data["inReplyTo"].(string)
 			if ok && (inReplyTo == msgID) {
-				slog.Debug("<<< requestSend",
-					slog.Any("rsp", rsp),
-				)
 				return rsp, nil
 			}
 		}

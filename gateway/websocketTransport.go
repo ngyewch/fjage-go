@@ -50,13 +50,21 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string) (*WebSocketTr
 		publisher:  pubsub.NewPublisher[*JSONMessage](broker),
 		subscriber: pubsub.NewSubscriber[*JSONMessage](broker),
 	}
-	go transport.keepAlive()
+
+	err = transport.sendAlive(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	//go transport.keepAlive()
 	go transport.readLoop()
+
 	return transport, nil
 }
 
 func (transport *WebSocketTransport) Close() error {
 	_ = transport.subscriber.Close()
+	_ = transport.sendAlive(context.Background(), false)
 	_ = transport.conn.CloseNow()
 	transport.closed = true
 	return nil
@@ -102,8 +110,7 @@ func (transport *WebSocketTransport) SendJsonMessage(ctx context.Context, jsonMe
 		return err
 	}
 	jsonMessageBytes = append(jsonMessageBytes, '\n')
-	//fmt.Println(time.Now().Format(time.DateTime), ">>>", string(jsonMessageBytes))
-	return transport.conn.Write(ctx, websocket.MessageText, jsonMessageBytes)
+	return transport.send(ctx, jsonMessageBytes)
 }
 
 func (transport *WebSocketTransport) readLoop() {
@@ -125,7 +132,9 @@ func (transport *WebSocketTransport) readLoop() {
 			if messageType != websocket.MessageText {
 				continue
 			}
-			//fmt.Println(time.Now().Format(time.DateTime), "<<<", string(messageBytes))
+			slog.Debug("wsTransport",
+				slog.String("<<<", string(messageBytes)),
+			)
 			var jsonMessage JSONMessage
 			err = json.Unmarshal(messageBytes, &jsonMessage)
 			if err != nil {
@@ -157,20 +166,21 @@ type AliveMessage struct {
 	Alive bool `json:"alive"`
 }
 
-func (transport *WebSocketTransport) keepAlive() {
-	aliveMessageBytes, err := json.Marshal(AliveMessage{Alive: true})
+func (transport *WebSocketTransport) sendAlive(ctx context.Context, alive bool) error {
+	aliveMessageBytes, err := json.Marshal(AliveMessage{Alive: alive})
 	if err != nil {
-		slog.Error("alive message marshal error",
-			slog.Any("err", err),
-		)
-		return
+		return err
 	}
 	aliveMessageBytes = append(aliveMessageBytes, '\n')
+	return transport.send(ctx, aliveMessageBytes)
+}
+
+func (transport *WebSocketTransport) keepAlive() {
 	ctx := context.Background()
 	for {
-		err = transport.conn.Write(ctx, websocket.MessageText, aliveMessageBytes)
+		err := transport.conn.Ping(ctx)
 		if err != nil {
-			slog.Warn("error sending alive message",
+			slog.Warn("error sending ping",
 				slog.Any("err", err),
 			)
 		}
@@ -180,4 +190,11 @@ func (transport *WebSocketTransport) keepAlive() {
 		case <-time.After(5 * time.Second):
 		}
 	}
+}
+
+func (transport *WebSocketTransport) send(ctx context.Context, data []byte) error {
+	slog.Debug("wsTransport",
+		slog.String(">>>", string(data)),
+	)
+	return transport.conn.Write(ctx, websocket.MessageText, data)
 }

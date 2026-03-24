@@ -13,10 +13,10 @@ type JSONMessage struct {
 	Action       string           `json:"action,omitempty"`
 	InResponseTo string           `json:"inResponseTo,omitempty"`
 	AgentID      string           `json:"agentID,omitempty"`
-	AgentIDs     []string         `json:"agentIDs,omitzero"`
-	AgentTypes   []string         `json:"agentTypes,omitzero"`
+	AgentIDs     []string         `json:"agentIDs,omitempty"`
+	AgentTypes   []string         `json:"agentTypes,omitempty"`
 	Service      string           `json:"service,omitempty"`
-	Services     []string         `json:"services,omitzero"`
+	Services     []string         `json:"services,omitempty"`
 	Answer       bool             `json:"answer,omitempty"`
 	Relay        bool             `json:"relay,omitempty"`
 	Message      *MessageEnvelope `json:"message,omitempty"`
@@ -49,9 +49,9 @@ func NewAgentsRequestMessage() (*JSONMessage, error) {
 
 func NewAgentsResponseMessage(req *JSONMessage, agentIDs []string) *JSONMessage {
 	return &JSONMessage{
-		ID:       req.ID,
-		Action:   req.Action,
-		AgentIDs: agentIDs,
+		ID:           req.ID,
+		InResponseTo: req.Action,
+		AgentIDs:     agentIDs,
 	}
 }
 
@@ -68,9 +68,9 @@ func NewServicesRequestMessage() (*JSONMessage, error) {
 
 func NewServicesResponseMessage(req *JSONMessage, services []string) *JSONMessage {
 	return &JSONMessage{
-		ID:       req.ID,
-		Action:   req.Action,
-		Services: services,
+		ID:           req.ID,
+		InResponseTo: req.Action,
+		Services:     services,
 	}
 }
 
@@ -88,9 +88,9 @@ func NewAgentForServiceRequestMessage(service string) (*JSONMessage, error) {
 
 func NewAgentForServiceResponseMessage(req *JSONMessage, agentID string) *JSONMessage {
 	return &JSONMessage{
-		ID:      req.ID,
-		Action:  req.Action,
-		AgentID: agentID,
+		ID:           req.ID,
+		InResponseTo: req.Action,
+		AgentID:      agentID,
 	}
 }
 
@@ -108,9 +108,9 @@ func NewAgentsForServiceRequestMessage(service string) (*JSONMessage, error) {
 
 func NewAgentsForServiceResponseMessage(req *JSONMessage, agentIDs []string) *JSONMessage {
 	return &JSONMessage{
-		ID:       req.ID,
-		Action:   req.Action,
-		AgentIDs: agentIDs,
+		ID:           req.ID,
+		InResponseTo: req.Action,
+		AgentIDs:     agentIDs,
 	}
 }
 
@@ -128,10 +128,22 @@ func NewContainsAgentRequestMessage(agentID string) (*JSONMessage, error) {
 
 func NewContainsAgentResponseMessage(req *JSONMessage, answer bool) *JSONMessage {
 	return &JSONMessage{
-		ID:     req.ID,
-		Action: req.Action,
-		Answer: answer,
+		ID:           req.ID,
+		InResponseTo: req.Action,
+		Answer:       answer,
 	}
+}
+
+func NewWantsMessagesFor(agentIDs []string) (*JSONMessage, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	return &JSONMessage{
+		ID:       id.String(),
+		Action:   "wantsMessagesFor",
+		AgentIDs: agentIDs,
+	}, nil
 }
 
 func NewSendRequestMessage(clazz string, message *fjage.Message, properties map[string]any) (*JSONMessage, error) {
@@ -151,5 +163,6 @@ func NewSendRequestMessage(clazz string, message *fjage.Message, properties map[
 			Clazz: clazz,
 			Data:  messageMap,
 		},
+		Relay: true,
 	}, nil
 }

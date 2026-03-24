@@ -19,17 +19,12 @@ func doShellLs(ctx context.Context, cmd *cli.Command) error {
 
 	return withGateway(ctx, cmd,
 		func(gw gateway.Gateway) error {
-			shellClient, err := newShellClient(ctx, cmd, gw)
+			shellHelper, err := newShellHelper(ctx, cmd, gw)
 			if err != nil {
 				return err
 			}
 
-			response, err := shellClient.GetFile(ctx, path, 0, 0)
-			if err != nil {
-				return err
-			}
-
-			dirEntries, err := response.DirEntries()
+			dirEntries, err := shellHelper.ListFiles(ctx, path)
 			if err != nil {
 				return err
 			}

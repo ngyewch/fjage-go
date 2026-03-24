@@ -24,6 +24,15 @@ func NewHelper(client *Client, copyBufferSize int64) *Helper {
 	}
 }
 
+func (helper *Helper) ListFiles(ctx context.Context, remotePath string) ([]shell.DirEntry, error) {
+	response, err := helper.client.GetFile(ctx, remotePath, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	return response.DirEntries()
+}
+
 func (helper *Helper) GetFile(ctx context.Context, remotePath string, localPath string, progressHandler ProgressHandler) error {
 	remoteDir := path.Dir(remotePath)
 	if remoteDir == "" {

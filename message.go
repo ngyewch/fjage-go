@@ -10,10 +10,22 @@ type Message struct {
 }
 
 func (m Message) PopulateMap(properties map[string]any) {
-	properties["msgID"] = m.MsgID
-	properties["perf"] = m.Perf
-	properties["recipient"] = m.Recipient
-	properties["sender"] = m.Sender
-	properties["inReplyTo"] = m.InReplyTo
-	properties["sentAt"] = m.SentAt
+	if m.MsgID != "" {
+		properties["msgID"] = m.MsgID
+	}
+	if m.Perf != "" {
+		properties["perf"] = m.Perf
+	}
+	if m.Recipient != "" {
+		properties["recipient"] = m.Recipient
+	}
+	if m.Sender != "" {
+		properties["sender"] = m.Sender
+	}
+	if m.InReplyTo != "" {
+		properties["inReplyTo"] = m.InReplyTo
+	}
+	if m.SentAt != 0 {
+		properties["sentAt"] = m.SentAt
+	}
 }

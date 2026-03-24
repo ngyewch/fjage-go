@@ -125,7 +125,7 @@ func (client *Client) ExecuteCommand(ctx context.Context, command string) error 
 			SentAt:    time.Now().UnixMilli(),
 		},
 		Command: command,
-		Ans:     false,
+		Ans:     true,
 	}
 	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
 	if err != nil {
@@ -164,7 +164,7 @@ func (client *Client) ExecuteScript(ctx context.Context, scriptFile string, scri
 		},
 		Script:     scriptFile,
 		ScriptArgs: scriptArgs,
-		Ans:        false,
+		Ans:        true,
 	}
 	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
 	if err != nil {

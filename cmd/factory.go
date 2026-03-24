@@ -35,7 +35,7 @@ func withGateway(ctx context.Context, cmd *cli.Command, handler func(gw gateway.
 	}(transport)
 
 	gw, err := func(transport gateway.Transport) (gateway.Gateway, error) {
-		return gateway.NewDefaultGateway(transport)
+		return gateway.NewDefaultGateway(ctx, transport)
 	}(transport)
 	if err != nil {
 		return err

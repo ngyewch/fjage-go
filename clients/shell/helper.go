@@ -156,3 +156,11 @@ func (helper *Helper) PutFile(ctx context.Context, localPath string, remotePath 
 
 	return nil
 }
+
+func (helper *Helper) ExecuteCommand(ctx context.Context, command string) error {
+	return helper.client.ExecuteCommand(ctx, command)
+}
+
+func (helper *Helper) ExecuteScript(ctx context.Context, scriptFile string, scriptArgs []string) error {
+	return helper.client.ExecuteScript(ctx, scriptFile, scriptArgs)
+}

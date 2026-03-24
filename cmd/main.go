@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 
+	"github.com/jwalton/go-supportscolor"
+	"github.com/phsym/console-slog"
 	"github.com/urfave/cli/v3"
 )
 
@@ -167,4 +170,28 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func init() {
+	logLevel := slog.LevelInfo
+	_ = logLevel.UnmarshalText([]byte(os.Getenv("LOG_LEVEL")))
+	addSource := os.Getenv("LOG_ADD_SOURCE") == "true"
+	noColor := os.Getenv("NO_COLOR") == "true"
+
+	var logger *slog.Logger
+	if supportscolor.Stderr().SupportsColor {
+		logger = slog.New(
+			console.NewHandler(os.Stderr, &console.HandlerOptions{
+				Level:     logLevel,
+				AddSource: addSource,
+				NoColor:   noColor,
+			}),
+		)
+	} else {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level:     logLevel,
+			AddSource: addSource,
+		}))
+	}
+	slog.SetDefault(logger)
 }

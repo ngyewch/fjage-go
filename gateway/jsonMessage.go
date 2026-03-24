@@ -1,6 +1,9 @@
 package gateway
 
 import (
+	"encoding/json"
+	"log/slog"
+
 	"github.com/google/uuid"
 	"github.com/ngyewch/fjage-go"
 )
@@ -17,6 +20,15 @@ type JSONMessage struct {
 	Answer       bool             `json:"answer,omitempty"`
 	Relay        bool             `json:"relay,omitempty"`
 	Message      *MessageEnvelope `json:"message,omitempty"`
+}
+
+func (jm JSONMessage) LogValue() slog.Value {
+	jsonBytes, err := json.Marshal(jm)
+	jsonString := ""
+	if err == nil {
+		jsonString = string(jsonBytes)
+	}
+	return slog.StringValue(jsonString)
 }
 
 type MessageEnvelope struct {

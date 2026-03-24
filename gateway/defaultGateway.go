@@ -120,6 +120,9 @@ func (gw *DefaultGateway) messageHandler() {
 }
 
 func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONMessage, error) {
+	slog.Debug(">>> request",
+		slog.Any("req", req),
+	)
 	subscription, err := gw.transport.SubscribeToResponse(req)
 	if err != nil {
 		return nil, err
@@ -137,15 +140,21 @@ func (gw *DefaultGateway) request(ctx context.Context, req *JSONMessage) (*JSONM
 			return nil, ctx.Err()
 		case err := <-subscription.ErrChan():
 			return nil, err
-		case jsonMessage := <-subscription.Chan():
-			if (jsonMessage.ID == req.ID) && (jsonMessage.InResponseTo == req.Action) {
-				return jsonMessage, nil
+		case rsp := <-subscription.Chan():
+			if (rsp.ID == req.ID) && (rsp.InResponseTo == req.Action) {
+				slog.Debug("<<< request",
+					slog.Any("rsp", rsp),
+				)
+				return rsp, nil
 			}
 		}
 	}
 }
 
 func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msgID string) (*JSONMessage, error) {
+	slog.Debug(">>> requestSend",
+		slog.Any("req", req),
+	)
 	subscription, err := gw.transport.SubscribeToMessageResponse(msgID)
 	if err != nil {
 		return nil, err
@@ -163,13 +172,16 @@ func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msg
 			return nil, ctx.Err()
 		case err := <-subscription.ErrChan():
 			return nil, err
-		case jsonMessage := <-subscription.Chan():
-			if (jsonMessage.Message == nil) || (jsonMessage.Message.Data == nil) {
+		case rsp := <-subscription.Chan():
+			if (rsp.Message == nil) || (rsp.Message.Data == nil) {
 				continue
 			}
-			inReplyTo, ok := jsonMessage.Message.Data["inReplyTo"].(string)
+			inReplyTo, ok := rsp.Message.Data["inReplyTo"].(string)
 			if ok && (inReplyTo == msgID) {
-				return jsonMessage, nil
+				slog.Debug("<<< requestSend",
+					slog.Any("rsp", rsp),
+				)
+				return rsp, nil
 			}
 		}
 	}

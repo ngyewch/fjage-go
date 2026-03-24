@@ -13,10 +13,10 @@ type JSONMessage struct {
 	Action       string           `json:"action,omitempty"`
 	InResponseTo string           `json:"inResponseTo,omitempty"`
 	AgentID      string           `json:"agentID,omitempty"`
-	AgentIDs     []string         `json:"agentIDs,omitempty"`
-	AgentTypes   []string         `json:"agentTypes,omitempty"`
+	AgentIDs     []string         `json:"agentIDs,omitzero"`
+	AgentTypes   []string         `json:"agentTypes,omitzero"`
 	Service      string           `json:"service,omitempty"`
-	Services     []string         `json:"services,omitempty"`
+	Services     []string         `json:"services,omitzero"`
 	Answer       bool             `json:"answer,omitempty"`
 	Relay        bool             `json:"relay,omitempty"`
 	Message      *MessageEnvelope `json:"message,omitempty"`

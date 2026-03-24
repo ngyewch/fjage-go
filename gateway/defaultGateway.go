@@ -105,15 +105,9 @@ func (gw *DefaultGateway) messageHandler() {
 					break
 				}
 			default:
-				/*
-					fmt.Println("!!! unhandled request")
-					jsonBytes, err := json.MarshalIndent(jsonMessage, "", "  ")
-					if err != nil {
-						fmt.Printf("%+v\n", jsonMessage)
-					} else {
-						fmt.Println(string(jsonBytes))
-					}
-				*/
+				slog.Debug("unhandled message",
+					slog.Any("jsonMessage", jsonMessage),
+				)
 			}
 		}
 	}

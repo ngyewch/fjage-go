@@ -156,6 +156,17 @@ var (
 						},
 					},
 					{
+						Name:   "delete",
+						Usage:  "delete",
+						Action: doShellDelete,
+						Flags: []cli.Flag{
+							gatewayUrlFlag,
+						},
+						Arguments: []cli.Argument{
+							remotePathArg,
+						},
+					},
+					{
 						Name:   "exec",
 						Usage:  "exec",
 						Action: doShellExec,

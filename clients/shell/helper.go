@@ -157,6 +157,14 @@ func (helper *Helper) PutFile(ctx context.Context, localPath string, remotePath 
 	return nil
 }
 
+func (helper *Helper) DeleteFile(ctx context.Context, remotePath string) error {
+	err := helper.client.PutFile(ctx, remotePath, 0, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (helper *Helper) ExecuteCommand(ctx context.Context, command string) error {
 	return helper.client.ExecuteCommand(ctx, command)
 }

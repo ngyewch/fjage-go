@@ -39,6 +39,8 @@ func doShellPut(ctx context.Context, cmd *cli.Command) error {
 				return err
 			}
 
+			_ = shellHelper.DeleteFile(ctx, remotePath)
+
 			err = shellHelper.PutFile(ctx, localPath, remotePath, progressHandler)
 			if err != nil {
 				return err

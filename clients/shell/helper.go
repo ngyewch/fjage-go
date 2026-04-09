@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
+	"slices"
 
 	"github.com/ngyewch/fjage-go/services/shell"
 )
@@ -13,15 +16,51 @@ import (
 type ProgressHandler func(current int64, total int64)
 
 type Helper struct {
-	client         *Client
-	copyBufferSize int64
+	client  *Client
+	options HelperOptions
+	httpUrl *url.URL
 }
 
-func NewHelper(client *Client, copyBufferSize int64) *Helper {
-	return &Helper{
-		client:         client,
-		copyBufferSize: copyBufferSize,
+var (
+	DefaultHelperOptions = HelperOptions{
+		CopyBufferSize:         16384,
+		HttpClient:             http.DefaultClient,
+		HttpGetFileDirectories: []string{"logs"},
 	}
+)
+
+type HelperOptions struct {
+	CopyBufferSize         int64
+	HttpClient             *http.Client
+	HttpGetFileDirectories []string
+}
+
+func NewHelper(client *Client, options *HelperOptions) (*Helper, error) {
+	if options == nil {
+		options = &DefaultHelperOptions
+	}
+	transportUrl, err := url.Parse(client.gw.Transport().Url())
+	if err != nil {
+		return nil, err
+	}
+	httpScheme := ""
+	if transportUrl.Scheme == "ws" {
+		httpScheme = "http"
+	} else if transportUrl.Scheme == "wss" {
+		httpScheme = "https"
+	}
+	var httpUrl *url.URL
+	if httpScheme != "" {
+		httpUrl, err = url.Parse(fmt.Sprintf("%s://%s", httpScheme, transportUrl.Host))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &Helper{
+		client:  client,
+		options: *options,
+		httpUrl: httpUrl,
+	}, nil
 }
 
 func (helper *Helper) ListFiles(ctx context.Context, remotePath string) ([]shell.DirEntry, error) {
@@ -73,34 +112,80 @@ func (helper *Helper) GetFile(ctx context.Context, remotePath string, localPath 
 		progressHandler(0, fileSize)
 	}
 
-	copyBufferSize := helper.copyBufferSize
-	if copyBufferSize <= 0 {
-		copyBufferSize = fileSize
-	}
-
-	var offset int64 = 0
-	for offset < fileSize {
-		length := copyBufferSize
-		if offset+length > dirEntry.Size {
-			length = dirEntry.Size - offset
-		}
-		response, err := helper.client.GetFile(ctx, remotePath, offset, length)
+	if (helper.httpUrl != nil) && slices.Contains(helper.options.HttpGetFileDirectories, path.Dir(remotePath)) {
+		relativeUrl, err := url.Parse(remotePath)
 		if err != nil {
 			return err
 		}
-
-		if response.Directory {
-			return fmt.Errorf("%s is a directory", remotePath)
-		}
-
-		_, err = f.Write(response.Contents)
+		remoteUrl := helper.httpUrl.ResolveReference(relativeUrl)
+		httpRequest, err := http.NewRequest("GET", remoteUrl.String(), nil)
 		if err != nil {
 			return err
 		}
+		httpResponse, err := helper.options.HttpClient.Do(httpRequest)
+		if err != nil {
+			return err
+		}
+		defer func(body io.ReadCloser) {
+			_ = body.Close()
+		}(httpResponse.Body)
+		if httpResponse.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected HTTP status: %s", httpResponse.Status)
+		}
 
-		offset += int64(len(response.Contents))
-		if progressHandler != nil {
-			progressHandler(offset, fileSize)
+		buffer := make([]byte, 32*1024)
+		f, err := os.Create(localPath)
+		if err != nil {
+			return err
+		}
+		defer func(f *os.File) {
+			_ = f.Close()
+		}(f)
+		var offset int64
+		for {
+			readLen, err := httpResponse.Body.Read(buffer)
+			if err != nil {
+				if err == io.EOF {
+					break
+				} else {
+					return err
+				}
+			}
+			offset += int64(readLen)
+			if progressHandler != nil {
+				progressHandler(offset, fileSize)
+			}
+		}
+	} else {
+		copyBufferSize := helper.options.CopyBufferSize
+		if copyBufferSize <= 0 {
+			copyBufferSize = fileSize
+		}
+
+		var offset int64 = 0
+		for offset < fileSize {
+			length := copyBufferSize
+			if offset+length > dirEntry.Size {
+				length = dirEntry.Size - offset
+			}
+			response, err := helper.client.GetFile(ctx, remotePath, offset, length)
+			if err != nil {
+				return err
+			}
+
+			if response.Directory {
+				return fmt.Errorf("%s is a directory", remotePath)
+			}
+
+			_, err = f.Write(response.Contents)
+			if err != nil {
+				return err
+			}
+
+			offset += int64(len(response.Contents))
+			if progressHandler != nil {
+				progressHandler(offset, fileSize)
+			}
 		}
 	}
 
@@ -118,7 +203,7 @@ func (helper *Helper) PutFile(ctx context.Context, localPath string, remotePath 
 		progressHandler(0, fileSize)
 	}
 
-	copyBufferSize := helper.copyBufferSize
+	copyBufferSize := helper.options.CopyBufferSize
 	if copyBufferSize <= 0 {
 		copyBufferSize = fileSize
 	}

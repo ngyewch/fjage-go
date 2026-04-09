@@ -10,6 +10,7 @@ import (
 type Transport interface {
 	io.Closer
 
+	Url() string
 	SubscribeToRequests() (JsonMessageSubscription, error)
 	SubscribeToResponse(jsonMessage *JSONMessage) (JsonMessageSubscription, error)
 	SubscribeToMessageResponse(msgID string) (JsonMessageSubscription, error)

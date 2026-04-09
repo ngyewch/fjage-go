@@ -14,6 +14,7 @@ import (
 )
 
 type WebSocketTransport struct {
+	url        string
 	conn       *websocket.Conn
 	broker     *pubsub.Broker[*JSONMessage]
 	publisher  *pubsub.Publisher[*JSONMessage]
@@ -45,6 +46,7 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string) (*WebSocketTr
 		return nil, err
 	}
 	transport := &WebSocketTransport{
+		url:        gatewayUrl,
 		conn:       conn,
 		broker:     broker,
 		publisher:  pubsub.NewPublisher[*JSONMessage](broker),
@@ -68,6 +70,10 @@ func (transport *WebSocketTransport) Close() error {
 	_ = transport.conn.CloseNow()
 	transport.closed = true
 	return nil
+}
+
+func (transport *WebSocketTransport) Url() string {
+	return transport.url
 }
 
 func (transport *WebSocketTransport) SubscribeToRequests() (JsonMessageSubscription, error) {

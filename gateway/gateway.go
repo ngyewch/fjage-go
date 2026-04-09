@@ -10,6 +10,7 @@ import (
 type Gateway interface {
 	io.Closer
 
+	Transport() Transport
 	AgentID() string
 	Agents(ctx context.Context) (*AgentsResponse, error)
 	Services(ctx context.Context) (*ServicesResponse, error)

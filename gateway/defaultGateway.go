@@ -45,6 +45,10 @@ func (gw *DefaultGateway) Close() error {
 	return nil
 }
 
+func (gw *DefaultGateway) Transport() Transport {
+	return gw.transport
+}
+
 func (gw *DefaultGateway) AgentID() string {
 	return gw.agentID
 }

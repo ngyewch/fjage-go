@@ -33,6 +33,10 @@ func New(ctx context.Context, gw gateway.Gateway) (*Client, error) {
 	}, nil
 }
 
+func (client *Client) Gateway() gateway.Gateway {
+	return client.gw
+}
+
 func (client *Client) GetFile(ctx context.Context, filename string, offset int64, length int64) (*shell.GetFileRsp, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {

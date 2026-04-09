@@ -59,5 +59,7 @@ func newShellHelper(ctx context.Context, cmd *cli.Command, gw gateway.Gateway) (
 		return nil, err
 	}
 
-	return shell.NewHelper(client, int64(copyBufferSize)), nil
+	helperOptions := shell.DefaultHelperOptions
+	helperOptions.CopyBufferSize = int64(copyBufferSize)
+	return shell.NewHelper(client, &helperOptions)
 }

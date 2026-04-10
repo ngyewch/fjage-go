@@ -133,7 +133,6 @@ func (helper *Helper) GetFile(ctx context.Context, remotePath string, localPath 
 			return fmt.Errorf("unexpected HTTP status: %s", httpResponse.Status)
 		}
 
-		buffer := make([]byte, 32*1024)
 		f, err := os.Create(localPath)
 		if err != nil {
 			return err
@@ -142,18 +141,25 @@ func (helper *Helper) GetFile(ctx context.Context, remotePath string, localPath 
 			_ = f.Close()
 		}(f)
 		var offset int64
+		buffer := make([]byte, 32*1024)
 		for {
 			readLen, err := httpResponse.Body.Read(buffer)
+			if readLen > 0 {
+				_, err = f.Write(buffer[0:readLen])
+				if err != nil {
+					return err
+				}
+				offset += int64(readLen)
+				if progressHandler != nil {
+					progressHandler(offset, fileSize)
+				}
+			}
 			if err != nil {
 				if err == io.EOF {
 					break
 				} else {
 					return err
 				}
-			}
-			offset += int64(readLen)
-			if progressHandler != nil {
-				progressHandler(offset, fileSize)
 			}
 		}
 	} else {

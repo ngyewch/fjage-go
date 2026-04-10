@@ -25,7 +25,7 @@ var (
 	DefaultHelperOptions = HelperOptions{
 		CopyBufferSize:         16384,
 		HttpClient:             http.DefaultClient,
-		HttpGetFileDirectories: []string{"logs"},
+		HttpGetFileDirectories: []string{"classes", "jars", "logs", "scripts"},
 	}
 )
 

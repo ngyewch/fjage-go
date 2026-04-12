@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 )
 
 type GenericValue struct {
@@ -35,7 +36,11 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 			for {
 				err = binary.Read(r, binary.LittleEndian, &n)
 				if err != nil {
-					break
+					if err == io.EOF {
+						break
+					} else {
+						return err
+					}
 				}
 				values = append(values, n)
 			}
@@ -46,7 +51,11 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 			for {
 				err = binary.Read(r, binary.LittleEndian, &n)
 				if err != nil {
-					break
+					if err == io.EOF {
+						break
+					} else {
+						return err
+					}
 				}
 				values = append(values, n)
 			}
@@ -57,7 +66,11 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 			for {
 				err = binary.Read(r, binary.LittleEndian, &n)
 				if err != nil {
-					break
+					if err == io.EOF {
+						break
+					} else {
+						return err
+					}
 				}
 				values = append(values, n)
 			}
@@ -68,7 +81,11 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 			for {
 				err = binary.Read(r, binary.LittleEndian, &n)
 				if err != nil {
-					break
+					if err == io.EOF {
+						break
+					} else {
+						return err
+					}
 				}
 				values = append(values, n)
 			}

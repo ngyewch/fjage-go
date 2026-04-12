@@ -1,19 +1,19 @@
 package fjage
 
 type PerformativeError struct {
-	perf string
+	performative Performative
 }
 
-func NewPerformativeError(perf string) *PerformativeError {
+func NewPerformativeError(perf Performative) *PerformativeError {
 	return &PerformativeError{
-		perf: perf,
+		performative: perf,
 	}
 }
 
-func (err PerformativeError) Perf() string {
-	return err.perf
+func (err PerformativeError) Performative() Performative {
+	return err.performative
 }
 
 func (err PerformativeError) Error() string {
-	return err.perf
+	return string(err.performative)
 }

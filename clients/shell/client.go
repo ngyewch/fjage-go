@@ -2,7 +2,6 @@ package shell
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -43,37 +42,30 @@ func (client *Client) GetFile(ctx context.Context, filename string, offset int64
 		return nil, err
 	}
 	request := &shell.GetFileReq{
-		Message: fjage.Message{
-			MsgID:     id.String(),
-			Perf:      "REQUEST",
-			Recipient: client.shellAgentID,
-			Sender:    client.gw.AgentID(),
-			SentAt:    time.Now().UnixMilli(),
+		Message: &fjage.Message{
+			MsgID:        id.String(),
+			Performative: fjage.PerformativeRequest,
+			Recipient:    client.shellAgentID,
+			Sender:       client.gw.AgentID(),
+			SentAt:       time.Now().UnixMilli(),
 		},
 		Filename: filename,
 		Offset:   offset,
 		Length:   length,
 	}
-	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	sendResponse, err := client.gw.Send(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-
-	jsonBytes, err := json.Marshal(sendResponse.Message)
-	if err != nil {
-		return nil, err
+	if sendResponse.Message.Header().Performative != fjage.PerformativeInform {
+		return nil, fjage.NewPerformativeError(sendResponse.Message.Header().Performative)
 	}
-
-	var messageWrapper gateway.MessageWrapper[*shell.GetFileRsp]
-	err = json.Unmarshal(jsonBytes, &messageWrapper)
-	if err != nil {
-		return nil, err
+	switch m := sendResponse.Message.(type) {
+	case *shell.GetFileRsp:
+		return m, nil
+	default:
+		return nil, nil
 	}
-	if messageWrapper.Data.Perf != "INFORM" {
-		return nil, fjage.NewPerformativeError(messageWrapper.Data.Perf)
-	}
-
-	return messageWrapper.Data, nil
 }
 
 func (client *Client) PutFile(ctx context.Context, filename string, offset int64, contents []byte) error {
@@ -82,36 +74,24 @@ func (client *Client) PutFile(ctx context.Context, filename string, offset int64
 		return err
 	}
 	request := &shell.PutFileReq{
-		Message: fjage.Message{
-			MsgID:     id.String(),
-			Perf:      "REQUEST",
-			Recipient: client.shellAgentID,
-			Sender:    client.gw.AgentID(),
-			SentAt:    time.Now().UnixMilli(),
+		Message: &fjage.Message{
+			MsgID:        id.String(),
+			Performative: fjage.PerformativeRequest,
+			Recipient:    client.shellAgentID,
+			Sender:       client.gw.AgentID(),
+			SentAt:       time.Now().UnixMilli(),
 		},
 		Filename: filename,
 		Offset:   offset,
 		Contents: types.ByteArray(contents),
 	}
-	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	sendResponse, err := client.gw.Send(ctx, request)
 	if err != nil {
 		return err
 	}
-
-	jsonBytes, err := json.Marshal(sendResponse.Message)
-	if err != nil {
-		return err
+	if sendResponse.Message.Header().Performative != fjage.PerformativeAgree {
+		return fjage.NewPerformativeError(sendResponse.Message.Header().Performative)
 	}
-
-	var messageWrapper gateway.MessageWrapper[*fjage.Message]
-	err = json.Unmarshal(jsonBytes, &messageWrapper)
-	if err != nil {
-		return err
-	}
-	if messageWrapper.Data.Perf != "AGREE" {
-		return fjage.NewPerformativeError(messageWrapper.Data.Perf)
-	}
-
 	return nil
 }
 
@@ -121,35 +101,23 @@ func (client *Client) ExecuteCommand(ctx context.Context, command string) error 
 		return err
 	}
 	request := &shell.ShellExecReq{
-		Message: fjage.Message{
-			MsgID:     id.String(),
-			Perf:      "REQUEST",
-			Recipient: client.shellAgentID,
-			Sender:    client.gw.AgentID(),
-			SentAt:    time.Now().UnixMilli(),
+		Message: &fjage.Message{
+			MsgID:        id.String(),
+			Performative: fjage.PerformativeRequest,
+			Recipient:    client.shellAgentID,
+			Sender:       client.gw.AgentID(),
+			SentAt:       time.Now().UnixMilli(),
 		},
 		Command: command,
 		Ans:     true,
 	}
-	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	sendResponse, err := client.gw.Send(ctx, request)
 	if err != nil {
 		return err
 	}
-
-	jsonBytes, err := json.Marshal(sendResponse.Message)
-	if err != nil {
-		return err
+	if sendResponse.Message.Header().Performative != fjage.PerformativeAgree {
+		return fjage.NewPerformativeError(sendResponse.Message.Header().Performative)
 	}
-
-	var messageWrapper gateway.MessageWrapper[*fjage.Message]
-	err = json.Unmarshal(jsonBytes, &messageWrapper)
-	if err != nil {
-		return err
-	}
-	if messageWrapper.Data.Perf != "AGREE" {
-		return fjage.NewPerformativeError(messageWrapper.Data.Perf)
-	}
-
 	return nil
 }
 
@@ -159,35 +127,23 @@ func (client *Client) ExecuteScript(ctx context.Context, scriptFile string, scri
 		return err
 	}
 	request := &shell.ShellExecReq{
-		Message: fjage.Message{
-			MsgID:     id.String(),
-			Perf:      "REQUEST",
-			Recipient: client.shellAgentID,
-			Sender:    client.gw.AgentID(),
-			SentAt:    time.Now().UnixMilli(),
+		Message: &fjage.Message{
+			MsgID:        id.String(),
+			Performative: fjage.PerformativeRequest,
+			Recipient:    client.shellAgentID,
+			Sender:       client.gw.AgentID(),
+			SentAt:       time.Now().UnixMilli(),
 		},
 		Script:     scriptFile,
 		ScriptArgs: scriptArgs,
 		Ans:        true,
 	}
-	sendResponse, err := client.gw.Send(ctx, request.Clazz(), &request.Message, request.PropertiesMap())
+	sendResponse, err := client.gw.Send(ctx, request)
 	if err != nil {
 		return err
 	}
-
-	jsonBytes, err := json.Marshal(sendResponse.Message)
-	if err != nil {
-		return err
+	if sendResponse.Message.Header().Performative != fjage.PerformativeAgree {
+		return fjage.NewPerformativeError(sendResponse.Message.Header().Performative)
 	}
-
-	var messageWrapper gateway.MessageWrapper[*fjage.Message]
-	err = json.Unmarshal(jsonBytes, &messageWrapper)
-	if err != nil {
-		return err
-	}
-	if messageWrapper.Data.Perf != "AGREE" {
-		return fjage.NewPerformativeError(messageWrapper.Data.Perf)
-	}
-
 	return nil
 }

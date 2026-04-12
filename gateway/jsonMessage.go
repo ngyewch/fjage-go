@@ -146,22 +146,28 @@ func NewWantsMessagesFor(agentIDs []string) (*JSONMessage, error) {
 	}, nil
 }
 
-func NewSendRequestMessage(clazz string, message *fjage.Message, properties map[string]any) (*JSONMessage, error) {
+func NewSendRequestMessage(message fjage.IMessage) (*JSONMessage, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
-	messageMap := make(map[string]any)
-	for key, value := range properties {
-		messageMap[key] = value
+
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		return nil, err
 	}
-	message.PopulateMap(messageMap)
+	var messageData map[string]any
+	err = json.Unmarshal(messageBytes, &messageData)
+	if err != nil {
+		return nil, err
+	}
+
 	return &JSONMessage{
 		ID:     id.String(),
 		Action: "send",
 		Message: &MessageEnvelope{
-			Clazz: clazz,
-			Data:  messageMap,
+			Clazz: message.JavaClassName(),
+			Data:  messageData,
 		},
 		Relay: true,
 	}, nil

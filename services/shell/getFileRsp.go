@@ -25,7 +25,7 @@ type DirEntry struct {
 	LastModified time.Time
 }
 
-func (rsp GetFileRsp) DirEntries() ([]DirEntry, error) {
+func (rsp *GetFileRsp) DirEntries() ([]DirEntry, error) {
 	if !rsp.Directory {
 		return nil, fmt.Errorf("%s is not a directory", rsp.Filename)
 	}

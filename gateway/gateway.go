@@ -17,7 +17,7 @@ type Gateway interface {
 	AgentForService(ctx context.Context, service string) (*AgentForServiceResponse, error)
 	AgentsForService(ctx context.Context, service string) (*AgentsForServiceResponse, error)
 	ContainsAgent(ctx context.Context, agentID string) (*ContainsAgentResponse, error)
-	Send(ctx context.Context, clazz string, message *fjage.Message, properties map[string]any) (*SendResponse, error)
+	Send(ctx context.Context, message fjage.IMessage) (*SendResponse, error)
 }
 
 type AgentsResponse struct {
@@ -41,5 +41,5 @@ type ContainsAgentResponse struct {
 }
 
 type SendResponse struct {
-	Message *MessageEnvelope
+	Message fjage.IMessage
 }

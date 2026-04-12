@@ -25,8 +25,13 @@ public class Main {
     WebServer.getInstance(8080, "0.0.0.0").addStatic("/", "/org/arl/fjage/web");
     final Connector conn = new WebSocketHubConnector(8080, "/shellAgent/ws");
     container.openWebSocketServer(8080, "/ws");
+
     final ShellAgent shellAgent = new ShellAgent(new ConsoleShell(conn), new GroovyScriptEngine());
     container.add("shell", shellAgent);
+
+    final TestAgent testAgent = new TestAgent();
+    container.add("test", testAgent);
+
     platform.start();
   }
 }

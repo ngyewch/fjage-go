@@ -4,11 +4,16 @@ import (
 	"encoding/json"
 
 	"github.com/ngyewch/fjage-go"
+	"github.com/ngyewch/fjage-go/param"
 	"github.com/ngyewch/fjage-go/services/shell"
 )
 
 func instantiateMessage(clazz string) fjage.IMessage {
 	switch clazz {
+	case "org.arl.fjage.param.ParameterReq":
+		return new(param.ParameterReq)
+	case "org.arl.fjage.param.ParameterRsp":
+		return new(param.ParameterRsp)
 	case "org.arl.fjage.shell.GetFileReq":
 		return new(shell.GetFileReq)
 	case "org.arl.fjage.shell.GetFileRsp":

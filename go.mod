@@ -1,6 +1,6 @@
 module github.com/ngyewch/fjage-go
 
-go 1.25.0
+go 1.23.0
 
 require (
 	github.com/F2077/go-pubsub v1.0.0

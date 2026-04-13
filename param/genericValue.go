@@ -111,7 +111,7 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 
 	var iv any
 	err = json.Unmarshal(data, &iv)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	v.Value = iv

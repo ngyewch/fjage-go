@@ -31,6 +31,7 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 		switch igv.Clazz {
 		case "[B":
 			v.Value = igv.Data
+			return nil
 		case "[D":
 			var values []float64
 			var n float64
@@ -46,6 +47,7 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 				values = append(values, n)
 			}
 			v.Value = values
+			return nil
 		case "[F":
 			var values []float32
 			var n float32
@@ -61,6 +63,7 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 				values = append(values, n)
 			}
 			v.Value = values
+			return nil
 		case "[I":
 			var values []int32
 			var n int32
@@ -76,6 +79,7 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 				values = append(values, n)
 			}
 			v.Value = values
+			return nil
 		case "[J":
 			var values []int64
 			var n int64
@@ -91,10 +95,12 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 				values = append(values, n)
 			}
 			v.Value = values
+			return nil
+		case "":
+			// do nothing
 		default:
 			return fmt.Errorf("unknown clazz %q", igv.Clazz)
 		}
-		return nil
 	}
 
 	var igvStrings internalGenericValueStrings
@@ -103,10 +109,12 @@ func (v *GenericValue) UnmarshalJSON(data []byte) error {
 		switch igvStrings.Clazz {
 		case "[Ljava.lang.String;":
 			v.Value = igvStrings.Data
+			return nil
+		case "":
+			// do nothing
 		default:
 			return fmt.Errorf("unknown clazz %q", igv.Clazz)
 		}
-		return nil
 	}
 
 	var iv any

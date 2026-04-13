@@ -77,6 +77,88 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				}
 				godump.Dump(sendResponse.Message)
 			}
+			{
+				id, err := uuid.NewRandom()
+				if err != nil {
+					return err
+				}
+				req := &param.ParameterReq{
+					Message: &fjage.Message{
+						MsgID:        id.String(),
+						Performative: fjage.PerformativeRequest,
+						Recipient:    "test",
+						Sender:       gw.AgentID(),
+						SentAt:       time.Now().UnixMilli(),
+					},
+					Param: "TestParam.ints",
+					Requests: []param.ParameterReqEntry{
+						{
+							Param: "TestParam.ints",
+						},
+						{
+							Param: "TestParam.floats",
+						},
+						{
+							Param: "TestParam.doubles",
+						},
+						{
+							Param: "TestParam.strings",
+						},
+					},
+				}
+				sendResponse, err := gw.Send(ctx, req)
+				if err != nil {
+					return err
+				}
+				godump.Dump(sendResponse.Message)
+			}
+			{
+				id, err := uuid.NewRandom()
+				if err != nil {
+					return err
+				}
+				req := &param.ParameterReq{
+					Message: &fjage.Message{
+						MsgID:        id.String(),
+						Performative: fjage.PerformativeRequest,
+						Recipient:    "test",
+						Sender:       gw.AgentID(),
+						SentAt:       time.Now().UnixMilli(),
+					},
+					Param: "TestParam.ints",
+					Requests: []param.ParameterReqEntry{
+						{
+							Param: "TestParam.ints",
+							Value: &param.GenericValue{
+								Value: []int32{1, 2, 3},
+							},
+						},
+						{
+							Param: "TestParam.floats",
+							Value: &param.GenericValue{
+								Value: []float32{98.76, -54.32},
+							},
+						},
+						{
+							Param: "TestParam.doubles",
+							Value: &param.GenericValue{
+								Value: []float64{98.76, -54.32},
+							},
+						},
+						{
+							Param: "TestParam.strings",
+							Value: &param.GenericValue{
+								Value: []string{"boo", "hoo"},
+							},
+						},
+					},
+				}
+				sendResponse, err := gw.Send(ctx, req)
+				if err != nil {
+					return err
+				}
+				godump.Dump(sendResponse.Message)
+			}
 			/*
 				{
 					agentForServiceResponse, err := gw.AgentForService(ctx, "org.arl.unet.Services.DEVICE_INFO")

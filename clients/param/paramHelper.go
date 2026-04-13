@@ -105,9 +105,6 @@ func (helper *Helper) GetParams(ctx context.Context, agentID string, nameValueMa
 	if !ok {
 		return fmt.Errorf("unexpected response type: %T", sendResponse.Message)
 	}
-	if rsp.Values == nil {
-		return fmt.Errorf("missing param values")
-	}
 	{
 		target, ok := nameValueMap[rsp.Param]
 		if ok {
@@ -119,17 +116,19 @@ func (helper *Helper) GetParams(ctx context.Context, agentID string, nameValueMa
 			targetValue.Elem().Set(sourceValue)
 		}
 	}
-	for name, value := range rsp.Values {
-		target, ok := nameValueMap[name]
-		if !ok {
-			continue
+	if rsp.Values != nil {
+		for name, value := range rsp.Values {
+			target, ok := nameValueMap[name]
+			if !ok {
+				continue
+			}
+			targetValue := reflect.ValueOf(target)
+			sourceValue := reflect.ValueOf(value.Value)
+			if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
+				return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
+			}
+			targetValue.Elem().Set(sourceValue)
 		}
-		targetValue := reflect.ValueOf(target)
-		sourceValue := reflect.ValueOf(value.Value)
-		if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
-			return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
-		}
-		targetValue.Elem().Set(sourceValue)
 	}
 	return nil
 }

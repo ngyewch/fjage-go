@@ -2,19 +2,17 @@ package main
 
 import (
 	"context"
-	"time"
+	"fmt"
 
-	"github.com/goforj/godump"
-	"github.com/google/uuid"
-	"github.com/ngyewch/fjage-go"
+	paramClient "github.com/ngyewch/fjage-go/clients/param"
 	"github.com/ngyewch/fjage-go/gateway"
-	"github.com/ngyewch/fjage-go/param"
 	"github.com/urfave/cli/v3"
 )
 
 func doTest(ctx context.Context, cmd *cli.Command) error {
 	return withGateway(ctx, cmd,
 		func(gw gateway.Gateway) error {
+			paramHelper := paramClient.NewParamHelper(gw)
 			{
 				agentForServiceResponse, err := gw.AgentForService(ctx, "org.arl.fjage.shell.Services.SHELL")
 				if err != nil {
@@ -22,143 +20,159 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				}
 				shellAgentID := agentForServiceResponse.AgentID
 
-				id, err := uuid.NewRandom()
+				var language string
+				err = paramHelper.GetParam(ctx, shellAgentID, "org.arl.fjage.shell.ShellParam.language", &language)
 				if err != nil {
 					return err
 				}
-				req := &param.ParameterReq{
-					Message: &fjage.Message{
-						MsgID:        id.String(),
-						Performative: fjage.PerformativeRequest,
-						Recipient:    shellAgentID,
-						Sender:       gw.AgentID(),
-						SentAt:       time.Now().UnixMilli(),
-					},
-					Param: "org.arl.fjage.shell.ShellParam.language",
-				}
-				sendResponse, err := gw.Send(ctx, req)
-				if err != nil {
-					return err
-				}
-				godump.Dump(sendResponse.Message)
+				fmt.Printf("language: %s\n", language)
 			}
 			{
-				id, err := uuid.NewRandom()
+				err := paramHelper.SetParam(ctx, "test", "TestParam.strings", []string{"boo", "hoo"})
 				if err != nil {
 					return err
 				}
-				req := &param.ParameterReq{
-					Message: &fjage.Message{
-						MsgID:        id.String(),
-						Performative: fjage.PerformativeRequest,
-						Recipient:    "test",
-						Sender:       gw.AgentID(),
-						SentAt:       time.Now().UnixMilli(),
-					},
-					Param: "TestParam.ints",
-					Requests: []param.ParameterReqEntry{
-						{
-							Param: "TestParam.ints",
-						},
-						{
-							Param: "TestParam.floats",
-						},
-						{
-							Param: "TestParam.doubles",
-						},
-						{
-							Param: "TestParam.strings",
-						},
-					},
-				}
-				sendResponse, err := gw.Send(ctx, req)
-				if err != nil {
-					return err
-				}
-				godump.Dump(sendResponse.Message)
 			}
 			{
-				id, err := uuid.NewRandom()
+				var strings []string
+				err := paramHelper.GetParam(ctx, "test", "TestParam.strings", &strings)
 				if err != nil {
 					return err
 				}
-				req := &param.ParameterReq{
-					Message: &fjage.Message{
-						MsgID:        id.String(),
-						Performative: fjage.PerformativeRequest,
-						Recipient:    "test",
-						Sender:       gw.AgentID(),
-						SentAt:       time.Now().UnixMilli(),
-					},
-					Param: "TestParam.ints",
-					Requests: []param.ParameterReqEntry{
-						{
-							Param: "TestParam.ints",
-						},
-						{
-							Param: "TestParam.floats",
-						},
-						{
-							Param: "TestParam.doubles",
-						},
-						{
-							Param: "TestParam.strings",
-						},
-					},
-				}
-				sendResponse, err := gw.Send(ctx, req)
-				if err != nil {
-					return err
-				}
-				godump.Dump(sendResponse.Message)
+				fmt.Printf("strings: %v\n", strings)
 			}
 			{
-				id, err := uuid.NewRandom()
+				var ints []int32
+				var strings []string
+				err := paramHelper.GetParams(ctx, "test", map[string]any{
+					"TestParam.strings": &strings,
+					"TestParam.ints":    &ints,
+				})
 				if err != nil {
 					return err
 				}
-				req := &param.ParameterReq{
-					Message: &fjage.Message{
-						MsgID:        id.String(),
-						Performative: fjage.PerformativeRequest,
-						Recipient:    "test",
-						Sender:       gw.AgentID(),
-						SentAt:       time.Now().UnixMilli(),
-					},
-					Param: "TestParam.ints",
-					Requests: []param.ParameterReqEntry{
-						{
-							Param: "TestParam.ints",
-							Value: &param.GenericValue{
-								Value: []int32{1, 2, 3},
-							},
-						},
-						{
-							Param: "TestParam.floats",
-							Value: &param.GenericValue{
-								Value: []float32{98.76, -54.32},
-							},
-						},
-						{
-							Param: "TestParam.doubles",
-							Value: &param.GenericValue{
-								Value: []float64{98.76, -54.32},
-							},
-						},
-						{
-							Param: "TestParam.strings",
-							Value: &param.GenericValue{
-								Value: []string{"boo", "hoo"},
-							},
-						},
-					},
-				}
-				sendResponse, err := gw.Send(ctx, req)
-				if err != nil {
-					return err
-				}
-				godump.Dump(sendResponse.Message)
+				fmt.Printf("strings: %v\n", strings)
+				fmt.Printf("ints: %v\n", ints)
 			}
+			/*
+				{
+					id, err := uuid.NewRandom()
+					if err != nil {
+						return err
+					}
+					req := &param.ParameterReq{
+						Message: &fjage.Message{
+							MsgID:        id.String(),
+							Performative: fjage.PerformativeRequest,
+							Recipient:    "test",
+							Sender:       gw.AgentID(),
+							SentAt:       time.Now().UnixMilli(),
+						},
+						Param: "TestParam.ints",
+						Requests: []param.ParameterReqEntry{
+							{
+								Param: "TestParam.ints",
+							},
+							{
+								Param: "TestParam.floats",
+							},
+							{
+								Param: "TestParam.doubles",
+							},
+							{
+								Param: "TestParam.strings",
+							},
+						},
+					}
+					sendResponse, err := gw.Send(ctx, req)
+					if err != nil {
+						return err
+					}
+					godump.Dump(sendResponse.Message)
+				}
+				{
+					id, err := uuid.NewRandom()
+					if err != nil {
+						return err
+					}
+					req := &param.ParameterReq{
+						Message: &fjage.Message{
+							MsgID:        id.String(),
+							Performative: fjage.PerformativeRequest,
+							Recipient:    "test",
+							Sender:       gw.AgentID(),
+							SentAt:       time.Now().UnixMilli(),
+						},
+						Param: "TestParam.ints",
+						Requests: []param.ParameterReqEntry{
+							{
+								Param: "TestParam.ints",
+							},
+							{
+								Param: "TestParam.floats",
+							},
+							{
+								Param: "TestParam.doubles",
+							},
+							{
+								Param: "TestParam.strings",
+							},
+						},
+					}
+					sendResponse, err := gw.Send(ctx, req)
+					if err != nil {
+						return err
+					}
+					godump.Dump(sendResponse.Message)
+				}
+				{
+					id, err := uuid.NewRandom()
+					if err != nil {
+						return err
+					}
+					req := &param.ParameterReq{
+						Message: &fjage.Message{
+							MsgID:        id.String(),
+							Performative: fjage.PerformativeRequest,
+							Recipient:    "test",
+							Sender:       gw.AgentID(),
+							SentAt:       time.Now().UnixMilli(),
+						},
+						Param: "TestParam.ints",
+						Requests: []param.ParameterReqEntry{
+							{
+								Param: "TestParam.ints",
+								Value: &param.GenericValue{
+									Value: []int32{1, 2, 3},
+								},
+							},
+							{
+								Param: "TestParam.floats",
+								Value: &param.GenericValue{
+									Value: []float32{98.76, -54.32},
+								},
+							},
+							{
+								Param: "TestParam.doubles",
+								Value: &param.GenericValue{
+									Value: []float64{98.76, -54.32},
+								},
+							},
+							{
+								Param: "TestParam.strings",
+								Value: &param.GenericValue{
+									Value: []string{"boo", "hoo"},
+								},
+							},
+						},
+					}
+					sendResponse, err := gw.Send(ctx, req)
+					if err != nil {
+						return err
+					}
+					godump.Dump(sendResponse.Message)
+				}
+			*/
 			/*
 				{
 					agentForServiceResponse, err := gw.AgentForService(ctx, "org.arl.unet.Services.DEVICE_INFO")

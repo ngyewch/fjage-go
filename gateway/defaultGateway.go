@@ -9,9 +9,10 @@ import (
 )
 
 type DefaultGateway struct {
-	transport    Transport
-	subscription JsonMessageSubscription
-	agentID      string
+	transport     Transport
+	subscription  JsonMessageSubscription
+	agentID       string
+	subscriptions map[string]bool
 }
 
 func NewDefaultGateway(ctx context.Context, transport Transport) (*DefaultGateway, error) {
@@ -24,9 +25,10 @@ func NewDefaultGateway(ctx context.Context, transport Transport) (*DefaultGatewa
 		return nil, err
 	}
 	gw := &DefaultGateway{
-		transport:    transport,
-		subscription: subscription,
-		agentID:      "gateway-" + id.String(),
+		transport:     transport,
+		subscription:  subscription,
+		agentID:       "gateway-" + id.String(),
+		subscriptions: make(map[string]bool),
 	}
 	wantMessagesForJSONMessage, err := NewWantsMessagesFor([]string{gw.agentID})
 	if err != nil {
@@ -270,4 +272,34 @@ func (gw *DefaultGateway) Send(ctx context.Context, message fjage.IMessage) (*Se
 	return &SendResponse{
 		Message: responseMessage,
 	}, nil
+}
+
+func (gw *DefaultGateway) Subscribe(ctx context.Context, agentIDs ...string) error {
+	for _, agentID := range agentIDs {
+		gw.subscriptions[agentID] = true
+	}
+	return gw.updateSubscriptions(ctx)
+}
+
+func (gw *DefaultGateway) Unsubscribe(ctx context.Context, agentIDs ...string) error {
+	for _, agentID := range agentIDs {
+		delete(gw.subscriptions, agentID)
+	}
+	return gw.updateSubscriptions(ctx)
+}
+
+func (gw *DefaultGateway) updateSubscriptions(ctx context.Context) error {
+	aids := []string{gw.agentID}
+	for aid, _ := range gw.subscriptions {
+		aids = append(aids, aid+"__ntf")
+	}
+	wantMessagesForJSONMessage, err := NewWantsMessagesFor(aids)
+	if err != nil {
+		return err
+	}
+	err = gw.transport.SendJsonMessage(ctx, wantMessagesForJSONMessage)
+	if err != nil {
+		return err
+	}
+	return nil
 }

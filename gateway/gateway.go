@@ -18,8 +18,8 @@ type Gateway interface {
 	AgentsForService(ctx context.Context, service string) (*AgentsForServiceResponse, error)
 	ContainsAgent(ctx context.Context, agentID string) (*ContainsAgentResponse, error)
 	Send(ctx context.Context, message fjage.IMessage) (*SendResponse, error)
-	Subscribe(ctx context.Context, agentIDs ...string) error
-	Unsubscribe(ctx context.Context, agentIDs ...string) error
+	Subscribe(ctx context.Context, agentID string) error
+	Unsubscribe(ctx context.Context, agentID string) error
 }
 
 type AgentsResponse struct {

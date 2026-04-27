@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -274,24 +275,20 @@ func (gw *DefaultGateway) Send(ctx context.Context, message fjage.IMessage) (*Se
 	}, nil
 }
 
-func (gw *DefaultGateway) Subscribe(ctx context.Context, agentIDs ...string) error {
-	for _, agentID := range agentIDs {
-		gw.subscriptions[agentID] = true
-	}
+func (gw *DefaultGateway) Subscribe(ctx context.Context, agentID string) error {
+	gw.subscriptions[agentID] = true
 	return gw.updateSubscriptions(ctx)
 }
 
-func (gw *DefaultGateway) Unsubscribe(ctx context.Context, agentIDs ...string) error {
-	for _, agentID := range agentIDs {
-		delete(gw.subscriptions, agentID)
-	}
+func (gw *DefaultGateway) Unsubscribe(ctx context.Context, agentID string) error {
+	delete(gw.subscriptions, agentID)
 	return gw.updateSubscriptions(ctx)
 }
 
 func (gw *DefaultGateway) updateSubscriptions(ctx context.Context) error {
 	aids := []string{gw.agentID}
 	for aid, _ := range gw.subscriptions {
-		aids = append(aids, aid+"__ntf")
+		aids = append(aids, fmt.Sprintf("#%s__ntf", aid))
 	}
 	wantMessagesForJSONMessage, err := NewWantsMessagesFor(aids)
 	if err != nil {

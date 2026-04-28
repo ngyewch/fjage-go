@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/F2077/go-pubsub/pubsub"
@@ -153,9 +154,15 @@ func (transport *WebSocketTransport) readLoop() {
 			if jsonMessage.InResponseTo != "" {
 				topic = fmt.Sprintf("response/%s/%s", jsonMessage.InResponseTo, jsonMessage.ID)
 			} else if (jsonMessage.Action == "send") && (jsonMessage.Message != nil) && (jsonMessage.Message.Data != nil) {
-				inReplyTo, ok := jsonMessage.Message.Data["inReplyTo"].(string)
-				if ok {
-					topic = fmt.Sprintf("messageResponse/%s", inReplyTo)
+				recipient, hasRecipient := jsonMessage.Message.Data["recipient"].(string)
+				_, hasSender := jsonMessage.Message.Data["sender"].(string)
+				if hasRecipient && hasSender && strings.HasPrefix(recipient, "#") {
+					// notification message: use "requests" topic
+				} else {
+					inReplyTo, hasInReplyTo := jsonMessage.Message.Data["inReplyTo"].(string)
+					if hasInReplyTo {
+						topic = fmt.Sprintf("messageResponse/%s", inReplyTo)
+					}
 				}
 			}
 			err = transport.publisher.Publish(topic, &jsonMessage)

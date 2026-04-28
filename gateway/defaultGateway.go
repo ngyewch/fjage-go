@@ -4,16 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/ngyewch/fjage-go"
 )
 
 type DefaultGateway struct {
-	transport     Transport
-	subscription  JsonMessageSubscription
-	agentID       string
-	subscriptions map[string]bool
+	messageBroker  *MessageBroker[fjage.IMessage]
+	transport      Transport
+	subscription   JsonMessageSubscription
+	agentID        string
+	subscriptions  map[string]map[*MessageSubscription[fjage.IMessage]]bool
+	messageFactory *MessageFactory
 }
 
 func NewDefaultGateway(ctx context.Context, transport Transport) (*DefaultGateway, error) {
@@ -25,11 +28,17 @@ func NewDefaultGateway(ctx context.Context, transport Transport) (*DefaultGatewa
 	if err != nil {
 		return nil, err
 	}
+	messageBroker, err := NewMessageBroker[fjage.IMessage]()
+	if err != nil {
+		return nil, err
+	}
 	gw := &DefaultGateway{
-		transport:     transport,
-		subscription:  subscription,
-		agentID:       "gateway-" + id.String(),
-		subscriptions: make(map[string]bool),
+		messageBroker:  messageBroker,
+		transport:      transport,
+		subscription:   subscription,
+		agentID:        "gateway-" + id.String(),
+		subscriptions:  make(map[string]map[*MessageSubscription[fjage.IMessage]]bool),
+		messageFactory: NewMessageFactory(),
 	}
 	wantMessagesForJSONMessage, err := NewWantsMessagesFor([]string{gw.agentID})
 	if err != nil {
@@ -44,6 +53,7 @@ func NewDefaultGateway(ctx context.Context, transport Transport) (*DefaultGatewa
 }
 
 func (gw *DefaultGateway) Close() error {
+	_ = gw.messageBroker.Close()
 	_ = gw.subscription.Close()
 	return nil
 }
@@ -120,12 +130,27 @@ func (gw *DefaultGateway) messageHandler() {
 					break
 				}
 			default:
-				// do nothing
-				/*
+				msg, err := gw.messageFactory.UnmarshalMessage(jsonMessage.Message)
+				if err != nil {
+					slog.Error("error unmarshaling message",
+						slog.Any("err", err),
+					)
+					break
+				}
+				if msg != nil {
+					if strings.HasPrefix(msg.Header().Recipient, "#") {
+						err = gw.messageBroker.Publish(msg.Header().Recipient, msg)
+						if err != nil {
+							slog.Error("error publishing message",
+								slog.Any("err", err),
+							)
+						}
+					}
+				} else {
 					slog.Debug("unhandled message",
 						slog.Any("jsonMessage", jsonMessage),
 					)
-				*/
+				}
 			}
 		}
 	}
@@ -266,7 +291,7 @@ func (gw *DefaultGateway) Send(ctx context.Context, message fjage.IMessage) (*Se
 	if err != nil {
 		return nil, err
 	}
-	responseMessage, err := unmarshalMessage(rsp.Message)
+	responseMessage, err := gw.messageFactory.UnmarshalMessage(rsp.Message)
 	if err != nil {
 		return nil, err
 	}
@@ -275,20 +300,38 @@ func (gw *DefaultGateway) Send(ctx context.Context, message fjage.IMessage) (*Se
 	}, nil
 }
 
-func (gw *DefaultGateway) Subscribe(ctx context.Context, agentID string) error {
-	gw.subscriptions[agentID] = true
-	return gw.updateSubscriptions(ctx)
+func (gw *DefaultGateway) Subscribe(ctx context.Context, agentID string) (*MessageSubscription[fjage.IMessage], error) {
+	subscriptionMap, ok := gw.subscriptions[agentID]
+	if !ok {
+		subscriptionMap = make(map[*MessageSubscription[fjage.IMessage]]bool)
+		gw.subscriptions[agentID] = subscriptionMap
+	}
+	subscription, err := gw.messageBroker.Subscribe(fmt.Sprintf("#%s__ntf", agentID))
+	if err != nil {
+		return nil, err
+	}
+	subscription.subscription.OnClose = func(topic string) {
+		delete(subscriptionMap, subscription)
+		_ = gw.updateSubscriptions(context.Background())
+	}
+	subscriptionMap[subscription] = true
+	err = gw.updateSubscriptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return subscription, nil
 }
 
-func (gw *DefaultGateway) Unsubscribe(ctx context.Context, agentID string) error {
-	delete(gw.subscriptions, agentID)
-	return gw.updateSubscriptions(ctx)
+func (gw *DefaultGateway) RegisterMessageType(clazz string, instantiator func() fjage.IMessage) {
+	gw.messageFactory.Register(clazz, instantiator)
 }
 
 func (gw *DefaultGateway) updateSubscriptions(ctx context.Context) error {
 	aids := []string{gw.agentID}
-	for aid, _ := range gw.subscriptions {
-		aids = append(aids, fmt.Sprintf("#%s__ntf", aid))
+	for aid, subscriptionMap := range gw.subscriptions {
+		if len(subscriptionMap) > 0 {
+			aids = append(aids, fmt.Sprintf("#%s__ntf", aid))
+		}
 	}
 	wantMessagesForJSONMessage, err := NewWantsMessagesFor(aids)
 	if err != nil {

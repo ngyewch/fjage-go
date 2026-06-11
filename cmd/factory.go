@@ -19,7 +19,10 @@ func newTransport(ctx context.Context, cmd *cli.Command) (gateway.Transport, err
 	}
 
 	if (u.Scheme == "ws") || (u.Scheme == "wss") {
-		return gateway.NewWebSocketTransport(ctx, gatewayUrl)
+		return gateway.NewWebSocketTransport(ctx, gatewayUrl, gateway.WebSocketTransportOptions{
+			PingInterval: gateway.DefaultWebSocketPingInterval,
+			PingTimeout:  gateway.DefaultWebSocketPingTimeout,
+		})
 	}
 
 	return nil, fmt.Errorf("unsupported gateway url scheme: %s", u.Scheme)

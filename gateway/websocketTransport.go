@@ -14,8 +14,14 @@ import (
 	"github.com/coder/websocket"
 )
 
+const (
+	DefaultWebSocketPingInterval = 5 * time.Second
+	DefaultWebSocketPingTimeout  = 1 * time.Second
+)
+
 type WebSocketTransport struct {
 	url        string
+	options    WebSocketTransportOptions
 	conn       *websocket.Conn
 	broker     *pubsub.Broker[*JSONMessage]
 	publisher  *pubsub.Publisher[*JSONMessage]
@@ -23,7 +29,12 @@ type WebSocketTransport struct {
 	closed     bool
 }
 
-func NewWebSocketTransport(ctx context.Context, gatewayUrl string) (*WebSocketTransport, error) {
+type WebSocketTransportOptions struct {
+	PingInterval time.Duration
+	PingTimeout  time.Duration
+}
+
+func NewWebSocketTransport(ctx context.Context, gatewayUrl string, options WebSocketTransportOptions) (*WebSocketTransport, error) {
 	u, err := url.Parse(gatewayUrl)
 	if err != nil {
 		return nil, err
@@ -48,6 +59,7 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string) (*WebSocketTr
 	}
 	transport := &WebSocketTransport{
 		url:        gatewayUrl,
+		options:    options,
 		conn:       conn,
 		broker:     broker,
 		publisher:  pubsub.NewPublisher[*JSONMessage](broker),
@@ -59,7 +71,8 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string) (*WebSocketTr
 		return nil, err
 	}
 
-	//go transport.keepAlive()
+	go transport.keepAlive()
+
 	go transport.readLoop()
 
 	return transport, nil
@@ -121,19 +134,17 @@ func (transport *WebSocketTransport) SendJsonMessage(ctx context.Context, jsonMe
 }
 
 func (transport *WebSocketTransport) readLoop() {
+	defer func() {
+		slog.Debug("websocket readLoop exit")
+	}()
 	ctx := context.Background()
 	for !transport.closed {
 		messageType, messageBytes, err := transport.conn.Read(ctx)
 		if err != nil {
-			/*
-				closeStatus := websocket.CloseStatus(err)
-				if closeStatus == -1 {
-					slog.Error("websocket read error",
-						slog.Any("err", err),
-						slog.Any("closeStatus", closeStatus),
-					)
-				}
-			*/
+			slog.Error("websocket read error",
+				slog.Any("err", err),
+			)
+			_ = transport.Close()
 			break
 		} else {
 			if messageType != websocket.MessageText {
@@ -188,19 +199,33 @@ func (transport *WebSocketTransport) sendAlive(ctx context.Context, alive bool) 
 	return transport.send(ctx, aliveMessageBytes)
 }
 
+func (transport *WebSocketTransport) pingWithTimeout(ctx context.Context, timeout time.Duration) error {
+	if timeout > 0 {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		return transport.conn.Ping(ctxWithTimeout)
+	}
+	return transport.conn.Ping(ctx)
+}
+
 func (transport *WebSocketTransport) keepAlive() {
+	defer func() {
+		slog.Debug("websocket keepAlive exit")
+	}()
 	ctx := context.Background()
 	for {
-		err := transport.conn.Ping(ctx)
+		err := transport.pingWithTimeout(ctx, transport.options.PingTimeout)
 		if err != nil {
 			slog.Warn("error sending ping",
 				slog.Any("err", err),
 			)
+			_ = transport.Close()
+			break
 		}
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(5 * time.Second):
+		case <-time.After(transport.options.PingInterval):
 		}
 	}
 }

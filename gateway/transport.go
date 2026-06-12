@@ -11,6 +11,7 @@ type Transport interface {
 	io.Closer
 
 	Url() string
+	IsClosed() bool
 	SubscribeToRequests() (JsonMessageSubscription, error)
 	SubscribeToResponse(jsonMessage *JSONMessage) (JsonMessageSubscription, error)
 	SubscribeToMessageResponse(msgID string) (JsonMessageSubscription, error)

@@ -90,7 +90,14 @@ func (transport *WebSocketTransport) Url() string {
 	return transport.url
 }
 
+func (transport *WebSocketTransport) IsClosed() bool {
+	return transport.closed
+}
+
 func (transport *WebSocketTransport) SubscribeToRequests() (JsonMessageSubscription, error) {
+	if transport.closed {
+		return nil, ErrTransportClosed
+	}
 	subscription, err := transport.subscriber.Subscribe("requests",
 		pubsub.WithChannelSize[*JSONMessage](pubsub.DefaultChannelSize),
 	)
@@ -101,6 +108,9 @@ func (transport *WebSocketTransport) SubscribeToRequests() (JsonMessageSubscript
 }
 
 func (transport *WebSocketTransport) SubscribeToResponse(req *JSONMessage) (JsonMessageSubscription, error) {
+	if transport.closed {
+		return nil, ErrTransportClosed
+	}
 	subscription, err := transport.subscriber.Subscribe(fmt.Sprintf("response/%s/%s", req.Action, req.ID),
 		pubsub.WithChannelSize[*JSONMessage](pubsub.Single),
 	)
@@ -111,6 +121,9 @@ func (transport *WebSocketTransport) SubscribeToResponse(req *JSONMessage) (Json
 }
 
 func (transport *WebSocketTransport) SubscribeToMessageResponse(msgID string) (JsonMessageSubscription, error) {
+	if transport.closed {
+		return nil, ErrTransportClosed
+	}
 	topic := fmt.Sprintf("messageResponse/%s", msgID)
 	subscription, err := transport.subscriber.Subscribe(topic,
 		pubsub.WithChannelSize[*JSONMessage](pubsub.Single),
@@ -122,6 +135,9 @@ func (transport *WebSocketTransport) SubscribeToMessageResponse(msgID string) (J
 }
 
 func (transport *WebSocketTransport) SendJsonMessage(ctx context.Context, jsonMessage *JSONMessage) error {
+	if transport.closed {
+		return ErrTransportClosed
+	}
 	if jsonMessage.ID == "" {
 		return fmt.Errorf("JSONMessage.id is empty")
 	}

@@ -201,7 +201,7 @@ func (gw *DefaultGateway) requestSend(ctx context.Context, req *JSONMessage, msg
 		case err := <-subscription.ErrChan():
 			return nil, err
 		case rsp := <-subscription.Chan():
-			if (rsp.Message == nil) || (rsp.Message.Data == nil) {
+			if (rsp == nil) || (rsp.Message == nil) || (rsp.Message.Data == nil) {
 				continue
 			}
 			inReplyTo, ok := rsp.Message.Data["inReplyTo"].(string)
@@ -290,6 +290,9 @@ func (gw *DefaultGateway) Send(ctx context.Context, message fjage.IMessage) (*Se
 	rsp, err := gw.requestSend(ctx, req, message.Header().MsgID)
 	if err != nil {
 		return nil, err
+	}
+	if rsp == nil {
+		return nil, fjage.ErrNoResponse
 	}
 	responseMessage, err := gw.messageFactory.UnmarshalMessage(rsp.Message)
 	if err != nil {

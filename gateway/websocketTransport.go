@@ -80,7 +80,10 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string, options WebSo
 
 func (transport *WebSocketTransport) Close() error {
 	_ = transport.subscriber.Close()
-	_ = transport.sendAlive(context.Background(), false)
+	ctx := context.Background()
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	_ = transport.sendAlive(ctxWithTimeout, false)
 	_ = transport.conn.CloseNow()
 	transport.closed = true
 	return nil

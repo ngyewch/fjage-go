@@ -54,6 +54,18 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				fmt.Printf("strings: %v\n", strings)
 				fmt.Printf("ints: %v\n", ints)
 			}
+			{
+				type MyData struct {
+					Strings []string `json:"TestParam.strings"`
+					Ints    []int32  `json:"TestParam.ints"`
+				}
+				var data MyData
+				err := paramHelper.GetParamsAndPopulate(ctx, "test", &data)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("data: %+v\n", data)
+			}
 			/*
 				{
 					id, err := uuid.NewRandom()

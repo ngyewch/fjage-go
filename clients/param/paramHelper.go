@@ -106,36 +106,31 @@ func (helper *Helper) GetParams(ctx context.Context, agentID string, nameValueMa
 	if !ok {
 		return fmt.Errorf("unexpected response type: %T", sendResponse.Message)
 	}
-	{
+	handleParameter := func(name string, value any) error {
 		if nameValueMapIsEmpty {
-			nameValueMap[rsp.Param] = rsp.Value.Value
+			nameValueMap[name] = value
 		} else {
-			target, ok := nameValueMap[rsp.Param]
+			target, ok := nameValueMap[name]
 			if ok {
 				targetValue := reflect.ValueOf(target)
-				sourceValue := reflect.ValueOf(rsp.Value.Value)
+				sourceValue := reflect.ValueOf(value)
 				if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
 					return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
 				}
 				targetValue.Elem().Set(sourceValue)
 			}
 		}
+		return nil
+	}
+	err = handleParameter(rsp.Param, rsp.Value.Value)
+	if err != nil {
+		return err
 	}
 	if rsp.Values != nil {
 		for name, value := range rsp.Values {
-			if nameValueMapIsEmpty {
-				nameValueMap[name] = value.Value
-			} else {
-				target, ok := nameValueMap[name]
-				if !ok {
-					continue
-				}
-				targetValue := reflect.ValueOf(target)
-				sourceValue := reflect.ValueOf(value.Value)
-				if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
-					return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
-				}
-				targetValue.Elem().Set(sourceValue)
+			err = handleParameter(name, value.Value)
+			if err != nil {
+				return err
 			}
 		}
 	}

@@ -136,7 +136,9 @@ func (helper *Helper) GetParamsAndPopulate(ctx context.Context, agentID string, 
 			if !sourceValue.Type().AssignableTo(field.Type.Elem()) {
 				return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
 			}
-			targetValue.Elem().Set(sourceValue)
+			sourcePointerValue := reflect.New(sourceValue.Type())
+			sourcePointerValue.Elem().Set(sourceValue)
+			targetValue.Set(sourcePointerValue)
 		} else {
 			if !sourceValue.Type().AssignableTo(field.Type) {
 				return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())

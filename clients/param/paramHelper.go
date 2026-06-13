@@ -122,13 +122,21 @@ func (helper *Helper) GetParams(ctx context.Context, agentID string, nameValueMa
 		}
 		return nil
 	}
-	err = handleParameter(rsp.Param, rsp.Value.Value)
+	err = iterateParameters(rsp, handleParameter)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func iterateParameters(rsp *param.ParameterRsp, consumer func(name string, value any) error) error {
+	err := consumer(rsp.Param, rsp.Value.Value)
 	if err != nil {
 		return err
 	}
 	if rsp.Values != nil {
 		for name, value := range rsp.Values {
-			err = handleParameter(name, value.Value)
+			err = consumer(name, value.Value)
 			if err != nil {
 				return err
 			}

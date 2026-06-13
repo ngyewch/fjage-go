@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/jwalton/go-supportscolor"
 	"github.com/phsym/console-slog"
@@ -19,6 +20,12 @@ var (
 		Usage:   "gateway URL",
 		Value:   "ws://localhost:8080/ws",
 		Sources: cli.EnvVars("GATEWAY_URL"),
+	}
+	timeoutFlag = &cli.DurationFlag{
+		Name:    "timeout",
+		Usage:   "timeout",
+		Value:   5 * time.Second,
+		Sources: cli.EnvVars("TIMEOUT"),
 	}
 	copyBufferSizeFlag = &cli.IntFlag{
 		Name:    "copy-buffer-size",
@@ -110,6 +117,24 @@ var (
 				},
 				Arguments: []cli.Argument{
 					agentIdArg,
+				},
+			},
+			{
+				Name:  "param",
+				Usage: "param",
+				Commands: []*cli.Command{
+					{
+						Name:   "get",
+						Usage:  "get",
+						Action: doParamGet,
+						Flags: []cli.Flag{
+							gatewayUrlFlag,
+							timeoutFlag,
+						},
+						Arguments: []cli.Argument{
+							agentIdArg,
+						},
+					},
 				},
 			},
 			{

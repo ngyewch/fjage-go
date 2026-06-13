@@ -101,33 +101,42 @@ func (helper *Helper) GetParams(ctx context.Context, agentID string, nameValueMa
 	if sendResponse.Message.Header().Performative != fjage.PerformativeInform {
 		return fjage.NewPerformativeError(sendResponse.Message.Header().Performative)
 	}
+	nameValueMapIsEmpty := len(nameValueMap) == 0
 	rsp, ok := sendResponse.Message.(*param.ParameterRsp)
 	if !ok {
 		return fmt.Errorf("unexpected response type: %T", sendResponse.Message)
 	}
 	{
-		target, ok := nameValueMap[rsp.Param]
-		if ok {
-			targetValue := reflect.ValueOf(target)
-			sourceValue := reflect.ValueOf(rsp.Value.Value)
-			if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
-				return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
+		if nameValueMapIsEmpty {
+			nameValueMap[rsp.Param] = rsp.Value.Value
+		} else {
+			target, ok := nameValueMap[rsp.Param]
+			if ok {
+				targetValue := reflect.ValueOf(target)
+				sourceValue := reflect.ValueOf(rsp.Value.Value)
+				if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
+					return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
+				}
+				targetValue.Elem().Set(sourceValue)
 			}
-			targetValue.Elem().Set(sourceValue)
 		}
 	}
 	if rsp.Values != nil {
 		for name, value := range rsp.Values {
-			target, ok := nameValueMap[name]
-			if !ok {
-				continue
+			if nameValueMapIsEmpty {
+				nameValueMap[name] = value.Value
+			} else {
+				target, ok := nameValueMap[name]
+				if !ok {
+					continue
+				}
+				targetValue := reflect.ValueOf(target)
+				sourceValue := reflect.ValueOf(value.Value)
+				if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
+					return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
+				}
+				targetValue.Elem().Set(sourceValue)
 			}
-			targetValue := reflect.ValueOf(target)
-			sourceValue := reflect.ValueOf(value.Value)
-			if !sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
-				return fmt.Errorf("param value (%v) not assignable to target (%v)", sourceValue.Type(), targetValue.Type())
-			}
-			targetValue.Elem().Set(sourceValue)
 		}
 	}
 	return nil

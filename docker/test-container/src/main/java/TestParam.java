@@ -5,4 +5,8 @@ public enum TestParam implements Parameter {
     ints,
     floats,
     doubles,
+    string1,
+    int1,
+    float1,
+    double1,
 }

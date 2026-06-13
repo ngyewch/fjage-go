@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/goforj/godump"
 	paramClient "github.com/ngyewch/fjage-go/clients/param"
 	"github.com/ngyewch/fjage-go/gateway"
 	"github.com/urfave/cli/v3"
@@ -58,13 +59,27 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				type MyData struct {
 					Strings []string `json:"TestParam.strings"`
 					Ints    []int32  `json:"TestParam.ints"`
+					String1 string   `json:"TestParam.string1"`
 				}
 				var data MyData
 				err := paramHelper.GetParamsAndPopulate(ctx, "test", &data)
 				if err != nil {
 					return err
 				}
-				fmt.Printf("data: %+v\n", data)
+				godump.Dump(data)
+			}
+			{
+				type MyData struct {
+					Strings []string `json:"TestParam.strings"`
+					Ints    []int32  `json:"TestParam.ints"`
+					String1 *string  `json:"TestParam.string1"`
+				}
+				var data MyData
+				err := paramHelper.GetParamsAndPopulate(ctx, "test", &data)
+				if err != nil {
+					return err
+				}
+				godump.Dump(data)
 			}
 			/*
 				{

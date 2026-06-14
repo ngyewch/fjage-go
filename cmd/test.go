@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/goforj/godump"
 	paramClient "github.com/ngyewch/fjage-go/clients/param"
 	"github.com/ngyewch/fjage-go/gateway"
 	"github.com/urfave/cli/v3"
+	"go.octolab.org/pointer"
 )
 
 func doTest(ctx context.Context, cmd *cli.Command) error {
@@ -29,7 +31,19 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				fmt.Printf("language: %s\n", language)
 			}
 			{
-				err := paramHelper.SetParam(ctx, "test", "TestParam.strings", []string{"boo", "hoo"})
+				var strings []string
+				err := paramHelper.GetParam(ctx, "test", "TestParam.strings", &strings)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("strings: %v\n", strings)
+			}
+			{
+				t := time.Now().UnixMilli()
+				err := paramHelper.SetParam(ctx, "test", "TestParam.strings", []string{
+					fmt.Sprintf("boo-%d", t),
+					fmt.Sprintf("hoo-%d", t),
+				})
 				if err != nil {
 					return err
 				}
@@ -43,17 +57,11 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				fmt.Printf("strings: %v\n", strings)
 			}
 			{
-				var ints []int32
-				var strings []string
-				err := paramHelper.GetParams(ctx, "test", map[string]any{
-					"TestParam.strings": &strings,
-					"TestParam.ints":    &ints,
-				})
+				data, err := paramHelper.GetParams(ctx, "test")
 				if err != nil {
 					return err
 				}
-				fmt.Printf("strings: %v\n", strings)
-				fmt.Printf("ints: %v\n", ints)
+				godump.Dump(data)
 			}
 			{
 				type MyData struct {
@@ -81,184 +89,36 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 				}
 				godump.Dump(data)
 			}
-			/*
-				{
-					id, err := uuid.NewRandom()
-					if err != nil {
-						return err
-					}
-					req := &param.ParameterReq{
-						Message: &fjage.Message{
-							MsgID:        id.String(),
-							Performative: fjage.PerformativeRequest,
-							Recipient:    "test",
-							Sender:       gw.AgentID(),
-							SentAt:       time.Now().UnixMilli(),
-						},
-						Param: "TestParam.ints",
-						Requests: []param.ParameterReqEntry{
-							{
-								Param: "TestParam.ints",
-							},
-							{
-								Param: "TestParam.floats",
-							},
-							{
-								Param: "TestParam.doubles",
-							},
-							{
-								Param: "TestParam.strings",
-							},
-						},
-					}
-					sendResponse, err := gw.Send(ctx, req)
-					if err != nil {
-						return err
-					}
-					godump.Dump(sendResponse.Message)
+			{
+				type MyData struct {
+					String1 *string  `fjage.parameter:"TestParam.string1"`
+					Int1    *int32   `fjage.parameter:"TestParam.int1"`
+					Float1  *float32 `fjage.parameter:"TestParam.float1"`
+					Double1 *float64 `fjage.parameter:"TestParam.double1"`
 				}
 				{
-					id, err := uuid.NewRandom()
+					var data MyData
+					err := paramHelper.GetParamsAndPopulate(ctx, "test", &data)
 					if err != nil {
 						return err
 					}
-					req := &param.ParameterReq{
-						Message: &fjage.Message{
-							MsgID:        id.String(),
-							Performative: fjage.PerformativeRequest,
-							Recipient:    "test",
-							Sender:       gw.AgentID(),
-							SentAt:       time.Now().UnixMilli(),
-						},
-						Param: "TestParam.ints",
-						Requests: []param.ParameterReqEntry{
-							{
-								Param: "TestParam.ints",
-							},
-							{
-								Param: "TestParam.floats",
-							},
-							{
-								Param: "TestParam.doubles",
-							},
-							{
-								Param: "TestParam.strings",
-							},
-						},
-					}
-					sendResponse, err := gw.Send(ctx, req)
-					if err != nil {
-						return err
-					}
-					godump.Dump(sendResponse.Message)
+					godump.Dump(data)
 				}
 				{
-					id, err := uuid.NewRandom()
-					if err != nil {
-						return err
-					}
-					req := &param.ParameterReq{
-						Message: &fjage.Message{
-							MsgID:        id.String(),
-							Performative: fjage.PerformativeRequest,
-							Recipient:    "test",
-							Sender:       gw.AgentID(),
-							SentAt:       time.Now().UnixMilli(),
-						},
-						Param: "TestParam.ints",
-						Requests: []param.ParameterReqEntry{
-							{
-								Param: "TestParam.ints",
-								Value: &param.GenericValue{
-									Value: []int32{1, 2, 3},
-								},
-							},
-							{
-								Param: "TestParam.floats",
-								Value: &param.GenericValue{
-									Value: []float32{98.76, -54.32},
-								},
-							},
-							{
-								Param: "TestParam.doubles",
-								Value: &param.GenericValue{
-									Value: []float64{98.76, -54.32},
-								},
-							},
-							{
-								Param: "TestParam.strings",
-								Value: &param.GenericValue{
-									Value: []string{"boo", "hoo"},
-								},
-							},
-						},
-					}
-					sendResponse, err := gw.Send(ctx, req)
-					if err != nil {
-						return err
-					}
-					godump.Dump(sendResponse.Message)
-				}
-			*/
-			/*
-				{
-					agentForServiceResponse, err := gw.AgentForService(ctx, "org.arl.unet.Services.DEVICE_INFO")
-					if err != nil {
-						return err
-					}
-					fmt.Printf("agentID = %s\n", agentForServiceResponse.AgentID)
-					deviceInfoAgentID := agentForServiceResponse.AgentID
-
-					id, err := uuid.NewRandom()
-					if err != nil {
-						return err
-					}
-					sendResponse, err := gw.Send(ctx, "org.arl.fjage.param.ParameterReq", &fjage.Message{
-						MsgID:     id.String(),
-						Perf:      "REQUEST",
-						Recipient: deviceInfoAgentID,
-						Sender:    gw.AgentID(),
-						SentAt:    time.Now().UnixMilli(),
-					}, map[string]any{
-						"param": "model",
+					err := paramHelper.SetParamsFromStruct(ctx, "test", MyData{
+						String1: pointer.ToString(time.Now().Format(time.RFC3339)),
 					})
 					if err != nil {
 						return err
 					}
-
-					fmt.Printf("sendResponse = %+v\n", sendResponse)
-					godump.Dump(sendResponse)
+					var data MyData
+					err = paramHelper.GetParamsAndPopulate(ctx, "test", &data)
+					if err != nil {
+						return err
+					}
+					godump.Dump(data)
 				}
-				{
-					agentForServiceResponse, err := gw.AgentForService(ctx, "org.arl.unet.Services.BASEBAND")
-					if err != nil {
-						return err
-					}
-					fmt.Printf("agentID = %s\n", agentForServiceResponse.AgentID)
-					deviceInfoAgentID := agentForServiceResponse.AgentID
-
-					id, err := uuid.NewRandom()
-					if err != nil {
-						return err
-					}
-					sendResponse, err := gw.Send(ctx, "org.arl.fjage.param.ParameterReq", &fjage.Message{
-						MsgID:     id.String(),
-						Perf:      "REQUEST",
-						Recipient: deviceInfoAgentID,
-						Sender:    gw.AgentID(),
-						SentAt:    time.Now().UnixMilli(),
-					}, map[string]any{
-						"param": "record",
-					})
-					if err != nil {
-						return err
-					}
-
-					fmt.Printf("sendResponse = %+v\n", sendResponse)
-					godump.Dump(sendResponse)
-				}
-			*/
-
+			}
 			return nil
 		})
 }

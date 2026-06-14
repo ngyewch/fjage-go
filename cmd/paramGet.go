@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
+	"github.com/goforj/godump"
 	"github.com/ngyewch/fjage-go/clients/param"
 	"github.com/ngyewch/fjage-go/gateway"
 	"github.com/urfave/cli/v3"
@@ -21,20 +20,12 @@ func doParamGet(ctx context.Context, cmd *cli.Command) error {
 
 			paramHelper := param.NewParamHelper(gw)
 
-			paramMap := make(map[string]any)
-			err := paramHelper.GetParams(ctxWithTimeout, agentId, paramMap)
+			paramMap, err := paramHelper.GetParams(ctxWithTimeout, agentId)
 			if err != nil {
 				return err
 			}
 
-			for key, value := range paramMap {
-				jsonBytes, err := json.Marshal(value)
-				if err != nil {
-					return err
-				}
-				valueAsJson := string(jsonBytes)
-				fmt.Printf("%s = %s (%T)\n", key, valueAsJson, value)
-			}
+			godump.Dump(paramMap)
 
 			return nil
 		})

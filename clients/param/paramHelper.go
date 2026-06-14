@@ -13,6 +13,10 @@ import (
 	"github.com/ngyewch/fjage-go/param"
 )
 
+const (
+	parameterTagName = "fjage.parameter"
+)
+
 type Helper struct {
 	gw gateway.Gateway
 }
@@ -117,12 +121,12 @@ func (helper *Helper) GetParamsAndPopulate(ctx context.Context, agentID string, 
 	fieldMap := make(map[string]reflect.StructField)
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
-		jsonTag := field.Tag.Get("json")
-		parts := strings.Split(jsonTag, ",")
-		jsonFieldName := parts[0]
-		if jsonFieldName != "" {
-			names = append(names, jsonFieldName)
-			fieldMap[jsonFieldName] = field
+		parameterTagValue := field.Tag.Get(parameterTagName)
+		parts := strings.Split(parameterTagValue, ",")
+		parameterName := parts[0]
+		if parameterName != "" {
+			names = append(names, parameterName)
+			fieldMap[parameterName] = field
 		}
 	}
 	err := helper.GetParamsAndHandle(ctx, agentID, names, func(name string, value any) error {
@@ -145,7 +149,6 @@ func (helper *Helper) GetParamsAndPopulate(ctx context.Context, agentID string, 
 			}
 			targetValue.Set(sourceValue)
 		}
-
 		return nil
 	})
 	if err != nil {

@@ -57,9 +57,9 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 			}
 			{
 				type MyData struct {
-					Strings []string `json:"TestParam.strings"`
-					Ints    []int32  `json:"TestParam.ints"`
-					String1 string   `json:"TestParam.string1"`
+					Strings []string `fjage.parameter:"TestParam.strings"`
+					Ints    []int32  `fjage.parameter:"TestParam.ints"`
+					String1 string   `fjage.parameter:"TestParam.string1"`
 				}
 				var data MyData
 				err := paramHelper.GetParamsAndPopulate(ctx, "test", &data)
@@ -70,9 +70,9 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 			}
 			{
 				type MyData struct {
-					Strings []string `json:"TestParam.strings"`
-					Ints    []int32  `json:"TestParam.ints"`
-					String1 *string  `json:"TestParam.string1"`
+					Strings []string `fjage.parameter:"TestParam.strings"`
+					Ints    []int32  `fjage.parameter:"TestParam.ints"`
+					String1 *string  `fjage.parameter:"TestParam.string1"`
 				}
 				var data MyData
 				err := paramHelper.GetParamsAndPopulate(ctx, "test", &data)

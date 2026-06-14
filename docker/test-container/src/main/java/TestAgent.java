@@ -1,3 +1,6 @@
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.arl.fjage.Agent;
 import org.arl.fjage.param.ParameterMessageBehavior;
 
@@ -10,10 +13,15 @@ public class TestAgent extends Agent {
   private int int1 = 123;
   private float float1 = 36.47f;
   private double double1 = -25.14d;
+  private Map<String, Object> map = new TreeMap<>();
 
   @Override
   protected void init() {
     super.init();
+
+    map.put("subsystem1", 20.1f);
+    map.put("subsystem2", 30.2f);
+    map.put("subsystem3", 40.3f);
 
     add(new ParameterMessageBehavior(TestParam.class));
   }
@@ -80,5 +88,13 @@ public class TestAgent extends Agent {
 
   public void setDouble1(double value) {
     this.double1 = value;
+  }
+
+  public Map<String, Object> getMap() {
+    return map;
+  }
+
+  public void setMap(Map<String, Object> map) {
+    this.map = map;
   }
 }

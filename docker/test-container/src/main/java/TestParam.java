@@ -9,4 +9,5 @@ public enum TestParam implements Parameter {
     int1,
     float1,
     double1,
+    map,
 }

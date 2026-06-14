@@ -91,14 +91,15 @@ func doTest(ctx context.Context, cmd *cli.Command) error {
 			}
 			{
 				type MyData struct {
-					String1 *string   `fjage.parameter:"TestParam.string1"`
-					Int1    *int32    `fjage.parameter:"TestParam.int1"`
-					Float1  *float32  `fjage.parameter:"TestParam.float1"`
-					Double1 *float64  `fjage.parameter:"TestParam.double1"`
-					Strings []string  `fjage.parameter:"TestParam.strings"`
-					Ints    []int32   `fjage.parameter:"TestParam.ints"`
-					Floats  []float32 `fjage.parameter:"TestParam.floats"`
-					Doubles []float64 `fjage.parameter:"TestParam.doubles"`
+					String1 *string        `fjage.parameter:"TestParam.string1"`
+					Int1    *int32         `fjage.parameter:"TestParam.int1"`
+					Float1  *float32       `fjage.parameter:"TestParam.float1"`
+					Double1 *float64       `fjage.parameter:"TestParam.double1"`
+					Strings []string       `fjage.parameter:"TestParam.strings"`
+					Ints    []int32        `fjage.parameter:"TestParam.ints"`
+					Floats  []float32      `fjage.parameter:"TestParam.floats"`
+					Doubles []float64      `fjage.parameter:"TestParam.doubles"`
+					Map     map[string]any `fjage.parameter:"TestParam.map"`
 				}
 				{
 					var data MyData

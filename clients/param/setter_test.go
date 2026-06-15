@@ -1,7 +1,6 @@
 package param
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -9,39 +8,38 @@ import (
 )
 
 func TestSetValue(t *testing.T) {
+	doTestSetValue[string](t, "Hello, world!", "Hello, world!")
+}
+
+func doTestSetValue[T any](t *testing.T, source any, expected any) {
 	{
-		fmt.Println("----")
-		var source = "Hello, world!"
-		var target string
+		var target T
 		err := SetValue(reflect.ValueOf(source), reflect.ValueOf(&target))
 		if assert.NoError(t, err) {
-			assert.Equal(t, "Hello, world!", target)
+			assert.Equal(t, expected, target)
 		}
 	}
 	{
-		fmt.Println("----")
-		type TargetData struct {
-			Value string
+		type Holder struct {
+			Value T
 		}
-		var source = "Hello, world!"
-		var targetData TargetData
+		var targetData Holder
 		err := SetValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
 		if assert.NoError(t, err) {
-			assert.Equal(t, "Hello, world!", targetData.Value)
+			assert.Equal(t, expected, targetData.Value)
 		}
 	}
 	{
-		fmt.Println("----")
-		type TargetData struct {
-			Value *string
+		type Holder struct {
+			Value *T
 		}
-		var source = "Hello, world!"
-		var targetData TargetData
+		var targetData Holder
 		err := SetValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
 		if assert.NoError(t, err) {
 			if assert.NotNil(t, targetData.Value) {
-				assert.Equal(t, "Hello, world!", *targetData.Value)
+				assert.Equal(t, expected, *targetData.Value)
 			}
 		}
 	}
+
 }

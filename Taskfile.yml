@@ -10,8 +10,15 @@ tasks:
       - rm -rf dist
 
   build:
+    desc: Build
     cmds:
       - goreleaser build --clean --snapshot
+
+  test:
+    desc: Test
+    cmds:
+      - go mod tidy
+      - go test -v ./...
 
   build-single:
     desc: Build (single)

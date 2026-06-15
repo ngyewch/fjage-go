@@ -5,7 +5,19 @@ import (
 	"reflect"
 )
 
-func setValue(source reflect.Value, target reflect.Value) error {
+var (
+	ErrCannotSet     = fmt.Errorf("cannot set")
+	ErrCannotConvert = fmt.Errorf("cannot convert")
+)
+
+func SetValue(source reflect.Value, target reflect.Value) error {
+	fmt.Printf("target kind=%v canSet=%v\n", target.Kind(), target.CanSet())
+	if (target.Kind() == reflect.Pointer) && !target.CanSet() {
+		return SetValue(source, target.Elem())
+	}
+	if !target.CanSet() {
+		return ErrCannotSet
+	}
 	//fmt.Printf("source=%v (%s) / target=%v (%s)\n", source, source.Type().String(), target, target.Type().String())
 	if source.Kind() == reflect.Pointer {
 		return fmt.Errorf("source cannot be a pointer")
@@ -17,7 +29,7 @@ func setValue(source reflect.Value, target reflect.Value) error {
 	if (target.Kind() == reflect.Slice) && (source.Kind() == reflect.Slice) {
 		newSlice := reflect.MakeSlice(target.Type(), source.Len(), source.Cap())
 		for i := 0; i < source.Len(); i++ {
-			err := setValue(source.Index(i), newSlice.Index(i))
+			err := SetValue(source.Index(i), newSlice.Index(i))
 			if err != nil {
 				return err
 			}

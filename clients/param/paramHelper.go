@@ -76,7 +76,7 @@ func (helper *Helper) GetParam(ctx context.Context, agentID string, name string,
 		return fmt.Errorf("missing param value")
 	}
 	source := reflect.ValueOf(rsp.Value.Value)
-	err = setValue(source, target)
+	err = SetValue(source, target)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (helper *Helper) GetParamsAndPopulate(ctx context.Context, agentID string, 
 		}
 		sourceValue := reflect.ValueOf(value)
 		targetValue := structValue.FieldByName(field.Name)
-		err := setValue(sourceValue, targetValue)
+		err := SetValue(sourceValue, targetValue)
 		if err != nil {
 			return err
 		}

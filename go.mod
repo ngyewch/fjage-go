@@ -1,10 +1,10 @@
 module github.com/ngyewch/fjage-go
 
-go 1.23.0
+go 1.25.0
 
 require (
-	github.com/F2077/go-pubsub v1.0.0
-	github.com/coder/websocket v1.8.14
+	github.com/F2077/go-pubsub v1.1.1
+	github.com/coder/websocket v1.8.15
 	github.com/goforj/godump v1.9.1
 	github.com/google/uuid v1.6.0
 	github.com/jwalton/go-supportscolor v1.2.0
@@ -12,7 +12,7 @@ require (
 	github.com/phsym/console-slog v0.3.1
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/stretchr/testify v1.11.1
-	github.com/urfave/cli/v3 v3.9.1
+	github.com/urfave/cli/v3 v3.10.0
 	go.octolab.org v0.12.2
 )
 

@@ -11,7 +11,6 @@ var (
 )
 
 func SetValue(source reflect.Value, target reflect.Value) error {
-	fmt.Printf("target kind=%v canSet=%v\n", target.Kind(), target.CanSet())
 	if (target.Kind() == reflect.Pointer) && !target.CanSet() {
 		return SetValue(source, target.Elem())
 	}

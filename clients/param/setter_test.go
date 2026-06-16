@@ -35,7 +35,7 @@ func doTestSetValue[T any](t *testing.T, setValue ValueSetter, source any, expec
 			Value T
 		}
 		var targetData Holder
-		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
+		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&targetData).Elem().FieldByName("Value"))
 		if assert.NoError(t, err) {
 			doAssertEqual(t, expected, targetData.Value)
 		}
@@ -45,7 +45,7 @@ func doTestSetValue[T any](t *testing.T, setValue ValueSetter, source any, expec
 			Value *T
 		}
 		var targetData Holder
-		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
+		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&targetData).Elem().FieldByName("Value"))
 		if assert.NoError(t, err) {
 			if assert.NotNil(t, targetData.Value) {
 				doAssertEqual(t, expected, *targetData.Value)

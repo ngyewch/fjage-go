@@ -22,7 +22,7 @@ func doTestSetValueSuite(t *testing.T, setValue ValueSetter) {
 	doTestSetValue[[]float64](t, setValue, []any{float64(12.34), float32(-56.78)}, []float64{12.34, -56.78})
 }
 
-func doTestSetValue[T any](t *testing.T, setValue ValueSetter, source any, expected any) {
+func doTestSetValue[T any](t *testing.T, setValue ValueSetter, source any, expected T) {
 	{
 		var target T
 		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&target))

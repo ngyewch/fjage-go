@@ -10,6 +10,24 @@ var (
 	ErrCannotConvert = fmt.Errorf("cannot convert")
 )
 
+func SetValue2(source reflect.Value, target reflect.Value) error {
+	if source.Kind() == reflect.Pointer {
+		return fmt.Errorf("source cannot be a pointer")
+	}
+	if (target.Kind() == reflect.Pointer) && !target.CanSet() {
+		return SetValue2(source, target.Elem())
+	}
+	if !target.CanSet() {
+		return ErrCannotSet
+	}
+	convertedSource, err := Convert(source, target.Type())
+	if err != nil {
+		return err
+	}
+	target.Set(convertedSource)
+	return nil
+}
+
 func SetValue(source reflect.Value, target reflect.Value) error {
 	if (target.Kind() == reflect.Pointer) && !target.CanSet() {
 		return SetValue(source, target.Elem())

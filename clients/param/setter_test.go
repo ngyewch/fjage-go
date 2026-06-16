@@ -7,14 +7,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type ValueSetter func(source reflect.Value, target reflect.Value) error
+
 func TestSetValue(t *testing.T) {
-	doTestSetValue[string](t, "Hello, world!", "Hello, world!")
+	doTestSetValueSuite(t, SetValue)
 }
 
-func doTestSetValue[T any](t *testing.T, source any, expected any) {
+func doTestSetValueSuite(t *testing.T, setValue ValueSetter) {
+	doTestSetValue[string](t, setValue, "Hello, world!", "Hello, world!")
+}
+
+func doTestSetValue[T any](t *testing.T, setValue ValueSetter, source any, expected any) {
 	{
 		var target T
-		err := SetValue(reflect.ValueOf(source), reflect.ValueOf(&target))
+		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&target))
 		if assert.NoError(t, err) {
 			assert.Equal(t, expected, target)
 		}
@@ -24,7 +30,7 @@ func doTestSetValue[T any](t *testing.T, source any, expected any) {
 			Value T
 		}
 		var targetData Holder
-		err := SetValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
+		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
 		if assert.NoError(t, err) {
 			assert.Equal(t, expected, targetData.Value)
 		}
@@ -34,12 +40,11 @@ func doTestSetValue[T any](t *testing.T, source any, expected any) {
 			Value *T
 		}
 		var targetData Holder
-		err := SetValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
+		err := setValue(reflect.ValueOf(source), reflect.ValueOf(&targetData.Value))
 		if assert.NoError(t, err) {
 			if assert.NotNil(t, targetData.Value) {
 				assert.Equal(t, expected, *targetData.Value)
 			}
 		}
 	}
-
 }

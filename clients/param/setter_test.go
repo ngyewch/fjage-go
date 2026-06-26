@@ -9,10 +9,6 @@ import (
 
 type ValueSetter func(source reflect.Value, target reflect.Value) error
 
-func TestSetValue2(t *testing.T) {
-	doTestSetValueSuite(t, SetValue2)
-}
-
 func TestSetValue(t *testing.T) {
 	doTestSetValueSuite(t, SetValue)
 }

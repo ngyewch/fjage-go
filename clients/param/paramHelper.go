@@ -2,6 +2,7 @@ package param
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -126,10 +127,15 @@ func (helper *Helper) GetParamsAndPopulate(ctx context.Context, agentID string, 
 			return nil
 		}
 		sourceValue := reflect.ValueOf(value)
-		targetValue := structValue.FieldByName(field.Name)
-		err := SetValue(sourceValue, targetValue)
-		if err != nil {
-			return err
+		if sourceValue.IsValid() {
+			targetValue := structValue.FieldByName(field.Name)
+			err := SetValue(sourceValue, targetValue)
+			if err != nil {
+				if errors.Is(err, ErrCannotConvert) {
+					return fmt.Errorf("cannot set field %s (type=%s, param=%s) with value %v (%T): %w", field.Name, field.Type, name, value, value, err)
+				}
+				return err
+			}
 		}
 		return nil
 	})

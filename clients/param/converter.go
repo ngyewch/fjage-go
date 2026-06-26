@@ -28,6 +28,5 @@ func Convert(sourceValue reflect.Value, targetType reflect.Type) (reflect.Value,
 		}
 		return newSlice, nil
 	}
-	//fmt.Printf("sourceValue=%v, sourceType=%v, targetType=%v\n", sourceValue, sourceValue.Type(), targetType)
 	return reflect.Value{}, ErrCannotConvert
 }

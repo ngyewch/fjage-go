@@ -250,6 +250,11 @@ func TestConvert(t *testing.T) {
 			"zoo": 123.456,
 		},
 	)
+
+	{
+		_, err := Convert(reflect.ValueOf(nil), reflect.TypeFor[*int]())
+		assert.ErrorIs(t, err, ErrCannotConvert)
+	}
 }
 
 func doTestConvert(t *testing.T, sourceValue reflect.Value, targetType reflect.Type, expectedValue any) {

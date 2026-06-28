@@ -5,6 +5,9 @@ import (
 )
 
 func Convert(sourceValue reflect.Value, targetType reflect.Type) (reflect.Value, error) {
+	if !sourceValue.IsValid() {
+		return reflect.Value{}, ErrCannotConvert
+	}
 	if sourceValue.Type().AssignableTo(targetType) {
 		return sourceValue, nil
 	} else if sourceValue.Type().ConvertibleTo(targetType) {

@@ -14,6 +14,9 @@ builds:
     goarch:
       - amd64
       - arm64
+      - arm
+    goarm:
+      - 7
     ldflags:
       - -s -w
       - -X main.version={{ if index .Env "VERSION" }}{{ .Env.VERSION }}{{ else }}{{ .Version }}{{ end }}

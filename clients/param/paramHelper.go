@@ -124,7 +124,16 @@ func (helper *Helper) GetParamsAndPopulate(ctx context.Context, agentID string, 
 	err := helper.GetParamsAndHandle(ctx, agentID, names, func(name string, value any) error {
 		field, ok := fieldMap[name]
 		if !ok {
-			return nil
+			p := strings.LastIndex(name, ".")
+			if p >= 0 {
+				shortName := name[p+1:]
+				field, ok = fieldMap[shortName]
+				if !ok {
+					return nil
+				}
+			} else {
+				return nil
+			}
 		}
 		sourceValue := reflect.ValueOf(value)
 		if sourceValue.IsValid() {

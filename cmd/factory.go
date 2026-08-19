@@ -22,6 +22,7 @@ func newTransport(ctx context.Context, cmd *cli.Command) (gateway.Transport, err
 		return gateway.NewWebSocketTransport(ctx, gatewayUrl, gateway.WebSocketTransportOptions{
 			PingInterval: gateway.DefaultWebSocketPingInterval,
 			PingTimeout:  gateway.DefaultWebSocketPingTimeout,
+			ReadLimit:    gateway.DefaultWebSocketReadLimit,
 		})
 	}
 

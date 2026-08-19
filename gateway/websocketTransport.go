@@ -17,6 +17,7 @@ import (
 const (
 	DefaultWebSocketPingInterval = 5 * time.Second
 	DefaultWebSocketPingTimeout  = 1 * time.Second
+	DefaultWebSocketReadLimit    = 1024 * 1024
 )
 
 type WebSocketTransport struct {
@@ -32,6 +33,7 @@ type WebSocketTransport struct {
 type WebSocketTransportOptions struct {
 	PingInterval time.Duration
 	PingTimeout  time.Duration
+	ReadLimit    int64
 }
 
 func NewWebSocketTransport(ctx context.Context, gatewayUrl string, options WebSocketTransportOptions) (*WebSocketTransport, error) {
@@ -52,6 +54,9 @@ func NewWebSocketTransport(ctx context.Context, gatewayUrl string, options WebSo
 	}
 	if err != nil {
 		return nil, err
+	}
+	if (options.ReadLimit == -1) || (options.ReadLimit > 0) {
+		conn.SetReadLimit(options.ReadLimit)
 	}
 	broker, err := pubsub.NewBroker[*JSONMessage]()
 	if err != nil {
